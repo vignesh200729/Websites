@@ -1,0 +1,2393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Sentinel - HER'S SAFE PATH</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+    <style>
+        :root {
+            --primary-dark: #1a0f2e;
+            --secondary-dark: #2d1b47;
+            --accent-pink: #ff00ff;
+            --accent-magenta: #ff1493;
+            --accent-green: #00ff00;
+            --accent-orange: #ff5500;
+            --text-light: #e0e0e0;
+            --text-muted: #9ca3af;
+            --border-color: #4a2f6f;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 100%);
+            color: var(--text-light);
+            font-family: 'Roboto', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* ── Navbar ── */
+        .navbar {
+            background: linear-gradient(90deg, #1a0f2e 0%, #2d1b47 100%) !important;
+            border-bottom: 2px solid #ff00ff;
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        .navbar-brand { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 700; font-family: 'Orbitron', sans-serif; color: #ffffff !important; }
+        .shield-icon { width: 30px; height: 30px; border: 2px solid #ff00ff; display: flex; align-items: center; justify-content: center; border-radius: 3px; font-weight: bold; color: #ff00ff; }
+        .navbar-brand-subtitle { font-size: 10px; color: #ff00ff; letter-spacing: 1px; }
+        .nav-link { color: #e0e0e0 !important; font-family: 'Roboto', sans-serif; font-size: 14px; margin: 0 10px; transition: color 0.3s ease; }
+        .nav-link:hover, .nav-link.active { color: #ff00ff !important; border-bottom: 2px solid #ff00ff; }
+        .sos-btn { background: #ff0000 !important; color: white !important; border: none !important; padding: 10px 20px !important; border-radius: 4px !important; font-weight: 700 !important; cursor: pointer !important; font-family: 'Orbitron', sans-serif !important; letter-spacing: 2px !important; box-shadow: 0 0 20px rgba(255,0,0,0.5) !important; transition: all 0.3s ease !important; }
+        .sos-btn:hover { background: #cc0000 !important; transform: scale(1.05) !important; }
+
+        /* Large SOS Button */
+        .sos-btn-large {
+            position: relative;
+            background: radial-gradient(circle at 40% 35%, #ff4444, #cc0000 60%, #880000) !important;
+            color: white !important;
+            border: 3px solid #ff6666 !important;
+            padding: 14px 28px !important;
+            border-radius: 50px !important;
+            font-weight: 900 !important;
+            cursor: pointer !important;
+            font-family: 'Orbitron', sans-serif !important;
+            letter-spacing: 3px !important;
+            font-size: 18px !important;
+            box-shadow: 0 0 30px rgba(255,0,0,0.7), 0 0 60px rgba(255,0,0,0.3) !important;
+            transition: all 0.2s ease !important;
+            overflow: visible !important;
+            animation: sosPulseBtn 1.5s ease-in-out infinite !important;
+        }
+        .sos-btn-large:hover { transform: scale(1.1) !important; box-shadow: 0 0 50px rgba(255,0,0,1), 0 0 100px rgba(255,0,0,0.5) !important; }
+        @keyframes sosPulseBtn {
+            0%,100% { box-shadow: 0 0 20px rgba(255,0,0,0.7), 0 0 40px rgba(255,0,0,0.3); }
+            50% { box-shadow: 0 0 40px rgba(255,80,80,1), 0 0 80px rgba(255,0,0,0.6); }
+        }
+        .sos-pulse-ring {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%; height: 100%;
+            border-radius: 50px;
+            border: 2px solid rgba(255,80,80,0.7);
+            animation: sosRingExpand 1.5s ease-out infinite;
+            pointer-events: none;
+        }
+        .sos-ring-2 { animation-delay: 0.75s; }
+        @keyframes sosRingExpand {
+            0% { transform: translate(-50%,-50%) scale(1); opacity: 0.8; }
+            100% { transform: translate(-50%,-50%) scale(2); opacity: 0; }
+        }
+        .notification-bell { position: relative; color: #ff00ff; font-size: 1.5rem; cursor: pointer; margin-right: 1.5rem; transition: transform 0.3s ease; }
+        .notification-bell:hover { transform: scale(1.1); }
+        .notification-count { position: absolute; top: -5px; right: -5px; background: #ff0000; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; }
+
+        /* ── Section visibility ── */
+        .hero-section.hidden,
+        .modules-section.hidden,
+        .safety-map-section.hidden,
+        .buddy-tracking-section.hidden,
+        .route-planner-section.hidden,
+        .stress-pattern-section.hidden { display: none; }
+
+        /* ── Hero ── */
+        .hero-section {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 50%, #1f1235 100%);
+            display: flex; align-items: center; justify-content: center;
+            padding: 60px 20px; position: relative; overflow: hidden;
+        }
+        @keyframes float { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
+        .hero-container { max-width: 1200px; position: relative; z-index: 1; }
+        .hero-title { font-size: 100px; font-weight: 900; font-family: 'Orbitron', sans-serif; margin: 20px 0; letter-spacing: 5px; text-shadow: 0 0 30px rgba(255,0,255,0.3); }
+        .hero-title .cyan-text { color: #ff00ff; text-shadow: 0 0 40px rgba(255,0,255,0.8); }
+        .hero-label { font-size: 14px; letter-spacing: 3px; color: #ff00ff; margin-bottom: 30px; font-family: 'Orbitron', sans-serif; }
+        .hero-subtitle { color: #9ca3af; font-size: 16px; margin-bottom: 20px; letter-spacing: 2px; }
+        .scroll-label { font-size: 13px; color: #ff00ff; letter-spacing: 2px; margin-bottom: 40px; font-family: 'Orbitron', sans-serif; }
+        .btn-custom { padding: 12px 35px; border: 2px solid; background: transparent; color: inherit; cursor: pointer; font-weight: 700; font-family: 'Orbitron', sans-serif; letter-spacing: 2px; border-radius: 4px; transition: all 0.3s ease; font-size: 14px; margin: 10px; text-decoration: none; display: inline-block; }
+        .btn-custom-cyan { border-color: #ff00ff; color: #ff00ff; }
+        .btn-custom-cyan:hover { background: #ff00ff; color: #1a0f2e; box-shadow: 0 0 30px rgba(255,0,255,0.5); }
+        .btn-custom-red { border-color: #ff0000; color: #ff0000; }
+        .btn-custom-red:hover { background: #ff0000; color: white; box-shadow: 0 0 30px rgba(255,0,0,0.5); }
+        .stats-container { font-family: 'Orbitron', sans-serif; font-size: 12px; letter-spacing: 2px; margin-top: 5rem; }
+        .stat-item { text-align: center; margin: 0 20px; display: inline-block; }
+        .stat-label { color: #ff00ff; }
+        .stat-value { font-weight: 700; margin-top: 5px; }
+
+        /* ── Modules ── */
+        .modules-section { background: linear-gradient(180deg, #1a0f2e 0%, #2d1b47 100%); padding: 5rem 2rem; }
+        .section-title { font-size: 48px; font-weight: 900; font-family: 'Orbitron', sans-serif; color: #ffffff; margin-bottom: 10px; letter-spacing: 3px; }
+        .section-title .cyan-text { color: #ff00ff; text-shadow: 0 0 30px rgba(255,0,255,0.8); }
+        .section-subtitle { color: #9ca3af; font-size: 14px; letter-spacing: 2px; font-family: 'Orbitron', sans-serif; margin-bottom: 3rem; }
+        .module-card { border-radius: 8px; overflow: hidden; cursor: pointer; transition: all 0.3s ease; position: relative; height: 100%; }
+        .module-card:hover { transform: translateY(-10px); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .module-card-cyan { border: 2px solid #ff00ff !important; background: linear-gradient(135deg,rgba(26,15,46,0.9) 0%,rgba(45,27,71,0.9) 100%) !important; }
+        .module-card-cyan:hover { border-color: #ff00ff !important; box-shadow: 0 0 30px rgba(255,0,255,0.3) !important; }
+        .module-card-magenta { border: 2px solid #ff1493 !important; background: linear-gradient(135deg,rgba(26,15,46,0.9) 0%,rgba(45,27,71,0.9) 100%) !important; }
+        .module-card-magenta:hover { border-color: #ff1493 !important; box-shadow: 0 0 30px rgba(255,20,147,0.3) !important; }
+        .module-card-green { border: 2px solid #00ff00 !important; background: linear-gradient(135deg,rgba(26,15,46,0.9) 0%,rgba(45,27,71,0.9) 100%) !important; }
+        .module-card-green:hover { border-color: #00ff00 !important; box-shadow: 0 0 30px rgba(0,255,0,0.3) !important; }
+        .module-card-red { border: 2px solid #ff0000 !important; background: linear-gradient(135deg,rgba(26,15,46,0.9) 0%,rgba(45,27,71,0.9) 100%) !important; }
+        .module-card-red:hover { border-color: #ff0000 !important; box-shadow: 0 0 30px rgba(255,0,0,0.3) !important; }
+        .map-container { position: relative; height: 250px; border-bottom: 2px solid; background: linear-gradient(135deg,rgba(255,0,255,0.1) 0%,rgba(255,0,255,0.05) 100%); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .module-label { font-size: 11px; letter-spacing: 2px; margin-bottom: 10px; font-family: 'Orbitron', sans-serif; }
+        .module-label.cyan { color: #ff00ff; }
+        .module-label.magenta { color: #ff1493; }
+        .module-label.green { color: #00ff00; }
+        .module-label.red { color: #ff0000; }
+        .module-title { font-size: 24px; font-weight: 700; color: #ffffff; margin-bottom: 10px; font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
+        .module-description { color: #9ca3af; font-size: 13px; margin-bottom: 15px; }
+        .module-icon { font-size: 48px; text-align: center; opacity: 0.3; margin-top: 20px; }
+
+        /* ── ABSOLUTE SECURITY Bleaching Animation ── */
+        @keyframes bleachWave {
+            0%   { color: #9ca3af; text-shadow: 0 0 30px rgba(156,163,175,0.3); filter: brightness(1); }
+            20%  { color: #ccccff; text-shadow: 0 0 60px rgba(200,200,255,0.8); filter: brightness(1.5); }
+            40%  { color: #ffffff; text-shadow: 0 0 80px rgba(255,255,255,1), 0 0 120px rgba(255,200,255,0.8); filter: brightness(2.5); }
+            60%  { color: #ffe0ff; text-shadow: 0 0 60px rgba(255,220,255,0.9); filter: brightness(1.8); }
+            80%  { color: #d0aacc; text-shadow: 0 0 30px rgba(200,150,200,0.5); filter: brightness(1.2); }
+            100% { color: #9ca3af; text-shadow: 0 0 30px rgba(156,163,175,0.3); filter: brightness(1); }
+        }
+        @keyframes bleachSecurityWave {
+            0%   { color: #ff00ff; text-shadow: 0 0 40px rgba(255,0,255,0.8); filter: brightness(1); }
+            20%  { color: #ff88ff; text-shadow: 0 0 80px rgba(255,100,255,1); filter: brightness(1.6); }
+            40%  { color: #ffffff; text-shadow: 0 0 100px rgba(255,255,255,1), 0 0 150px rgba(255,100,255,0.9); filter: brightness(3); }
+            60%  { color: #ffaaff; text-shadow: 0 0 70px rgba(255,150,255,0.9); filter: brightness(1.9); }
+            80%  { color: #ff44ff; text-shadow: 0 0 50px rgba(255,50,255,0.7); filter: brightness(1.3); }
+            100% { color: #ff00ff; text-shadow: 0 0 40px rgba(255,0,255,0.8); filter: brightness(1); }
+        }
+        .hero-title-absolute { animation: bleachWave 3s ease-in-out infinite; }
+        .hero-title-security { animation: bleachSecurityWave 3s ease-in-out infinite 0.5s; }
+
+        /* ── Stress Pattern Section ── */
+        .stress-pattern-section { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 100%); min-height: 100vh; }
+        .stress-hero { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 50%, #1f1235 100%); padding: 4rem 2rem; text-align: center; position: relative; overflow: hidden; }
+        .stress-hero::before { content: ''; position: absolute; top:0;left:0;right:0;bottom:0; background: radial-gradient(circle at 30% 50%, rgba(255,20,147,0.08) 0%, transparent 60%); pointer-events: none; }
+        .stress-badge { display: inline-block; border: 2px solid #ff1493; color: #ff1493; padding: 0.75rem 1.5rem; border-radius: 50px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .stress-title { font-size: 3.5rem; font-weight: 800; margin: 0.5rem 0; line-height: 1.1; font-family: 'Orbitron', sans-serif; }
+        .stress-title .magenta-text { color: #ff1493; text-shadow: 0 0 30px rgba(255,20,147,0.8); }
+        .stress-subtitle { font-size: 1.1rem; color: #9ca3af; max-width: 800px; margin: 1.5rem auto; line-height: 1.6; }
+
+        /* BPM Simulator */
+        .bpm-simulator { background: linear-gradient(135deg, rgba(255,20,147,0.1), rgba(45,27,71,0.9)); border: 2px solid #ff1493; border-radius: 16px; padding: 2rem; max-width: 900px; margin: 2rem auto; }
+        .bpm-display { font-size: 5rem; font-weight: 900; font-family: 'Orbitron', sans-serif; color: #ff1493; text-align: center; text-shadow: 0 0 30px rgba(255,20,147,0.8); transition: all 0.3s ease; }
+        .bpm-label { text-align: center; color: #9ca3af; font-size: 0.9rem; letter-spacing: 2px; margin-bottom: 1rem; }
+        .bpm-slider { width: 100%; -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; background: linear-gradient(to right, #00ff88, #ffaa00, #ff1493); outline: none; margin: 1rem 0; cursor: pointer; }
+        .bpm-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: #ff1493; border: 3px solid white; box-shadow: 0 0 15px rgba(255,20,147,0.8); cursor: pointer; }
+        .bpm-controls { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+        .bpm-btn { padding: 0.6rem 1.5rem; border: 2px solid #ff1493; background: transparent; color: #ff1493; border-radius: 6px; font-weight: 700; cursor: pointer; font-family: 'Orbitron', sans-serif; font-size: 0.85rem; transition: all 0.3s ease; }
+        .bpm-btn:hover { background: #ff1493; color: white; box-shadow: 0 0 20px rgba(255,20,147,0.5); }
+        .bpm-status-bar { display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap; margin-top: 1rem; }
+        .status-pill { padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; }
+        .pill-normal { background: rgba(0,255,136,0.15); border: 1px solid #00ff88; color: #00ff88; }
+        .pill-warning { background: rgba(255,170,0,0.15); border: 1px solid #ffaa00; color: #ffaa00; }
+        .pill-spike { background: rgba(255,20,147,0.2); border: 1px solid #ff1493; color: #ff1493; }
+
+        /* Trip & Spike Log */
+        .stress-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1100px; margin: 2rem auto; padding: 0 2rem; }
+        @media(max-width:768px){ .stress-grid { grid-template-columns: 1fr; } }
+        .stress-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .stress-card-title { font-size: 1.1rem; font-weight: 700; color: #ff1493; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; font-family: 'Orbitron', sans-serif; letter-spacing: 1px; }
+        .trip-controls { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .btn-trip { padding: 0.7rem 1.3rem; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; }
+        .btn-start-trip { background: #00ff88; color: #000; }
+        .btn-start-trip:hover { box-shadow: 0 0 20px rgba(0,255,136,0.5); transform: translateY(-2px); }
+        .btn-stop-trip { background: #ff1493; color: white; }
+        .btn-stop-trip:hover { box-shadow: 0 0 20px rgba(255,20,147,0.5); transform: translateY(-2px); }
+        .trip-info { margin-top: 1rem; display: flex; gap: 1rem; flex-wrap: wrap; }
+        .trip-stat { background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; flex: 1; min-width: 100px; text-align: center; }
+        .trip-stat-label { font-size: 0.7rem; color: #9ca3af; letter-spacing: 1px; text-transform: uppercase; }
+        .trip-stat-value { font-size: 1.3rem; font-weight: 700; color: white; font-family: 'Orbitron', sans-serif; margin-top: 0.3rem; }
+        .spike-log { max-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+        .spike-log::-webkit-scrollbar { width: 4px; }
+        .spike-log::-webkit-scrollbar-track { background: transparent; }
+        .spike-log::-webkit-scrollbar-thumb { background: #ff1493; border-radius: 2px; }
+        .spike-entry { background: rgba(255,20,147,0.08); border: 1px solid rgba(255,20,147,0.3); border-left: 3px solid #ff1493; border-radius: 8px; padding: 0.75rem; font-size: 0.85rem; }
+        .spike-entry-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; }
+        .spike-bpm { font-weight: 700; color: #ff1493; font-family: 'Orbitron', sans-serif; }
+        .spike-time { font-size: 0.75rem; color: #9ca3af; }
+        .spike-detail { color: #b0b0b0; line-height: 1.4; }
+        .spike-empty { color: #9ca3af; text-align: center; padding: 2rem; font-size: 0.9rem; }
+
+        /* Requirements cards */
+        .req-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px,1fr)); gap: 1.5rem; max-width: 1100px; margin: 2rem auto; padding: 0 2rem; }
+        .req-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid rgba(255,20,147,0.3); border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease; }
+        .req-card:hover { border-color: #ff1493; box-shadow: 0 0 20px rgba(255,20,147,0.2); transform: translateY(-4px); }
+        .req-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .req-title { font-weight: 700; color: #ff1493; margin-bottom: 0.5rem; font-family: 'Orbitron', sans-serif; font-size: 0.9rem; letter-spacing: 1px; }
+        .req-desc { color: #9ca3af; font-size: 0.9rem; line-height: 1.5; }
+        .heartbeat-line { width: 100%; height: 60px; margin: 1rem 0; }
+
+        .btn-back { display: inline-block; padding: 10px 20px; background: #ff00ff; color: white; border: none; border-radius: 4px; font-weight: 700; cursor: pointer; font-family: 'Orbitron', sans-serif; text-decoration: none; transition: all 0.3s ease; margin: 20px; }
+        .btn-back:hover { background: #ff1493; transform: scale(1.05); }
+
+        /* ── Safety Map ── */
+        .safety-map-section { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 100%); }
+        .hero-section-map { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 50%, #1f1235 100%); padding: 4rem 2rem; text-align: center; position: relative; overflow: hidden; }
+        .hero-section-map::before { content: ''; position: absolute; top:0;left:0;right:0;bottom:0; background: radial-gradient(circle at 20% 50%, rgba(255,0,255,0.1) 0%, transparent 50%); pointer-events: none; }
+        .safety-map-badge { display: inline-block; border: 2px solid #ff00ff; color: #ff00ff; padding: 0.75rem 1.5rem; border-radius: 50px; font-size: 0.9rem; font-weight: 600; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+        .hero-title-map { font-size: 4.5rem; font-weight: 800; margin: 0.5rem 0; line-height: 1.1; text-shadow: 0 0 20px rgba(255,0,255,0.3); }
+        .hero-title-map .pink-text { color: #ff00ff; }
+        .hero-subtitle-map { font-size: 1.2rem; color: var(--text-muted); max-width: 800px; margin: 1.5rem auto; line-height: 1.6; }
+        .location-display { background: var(--secondary-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin: 1.5rem auto; max-width: 600px; text-align: left; }
+        .location-display-item { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
+        .location-display-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .location-icon-display { font-size: 1.5rem; color: #ff00ff; width: 40px; text-align: center; }
+        .location-info { flex: 1; }
+        .location-label { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem; }
+        .location-value { font-size: 1.1rem; font-weight: 600; color: white; }
+        .get-location-btn { background: linear-gradient(135deg, #ff00ff, #ff1493); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; margin-top: 1rem; width: 100%; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; }
+        .get-location-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,0,255,0.3); }
+        .search-section { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; position: relative; z-index: 10; }
+        .search-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .search-input-wrapper, .filter-wrapper { position: relative; }
+        .search-input, .filter-select { width: 100%; background-color: var(--secondary-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem 1.5rem; color: var(--text-light); font-size: 1rem; transition: all 0.3s ease; }
+        .search-input:focus, .filter-select:focus { outline: none; border-color: #ff00ff; box-shadow: 0 0 0 3px rgba(255,0,255,0.1); }
+        .search-icon, .filter-icon { position: absolute; left: 1.5rem; top: 50%; transform: translateY(-50%); color: #ff00ff; pointer-events: none; }
+        .search-input { padding-left: 3rem; }
+        .filter-select { padding-left: 3rem; }
+        .locations-section { padding: 4rem 2rem; }
+        .section-title-map { font-size: 2rem; font-weight: 700; margin-bottom: 3rem; text-align: center; color: white; }
+        .section-title-map .pink-text { color: #ff00ff; }
+        .location-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px,1fr)); gap: 2rem; max-width: 1400px; margin: 0 auto; }
+        .location-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        .location-card::before { content: ''; position: absolute; top:0;left:0;right:0; height: 2px; background: linear-gradient(90deg, transparent, #ff00ff, transparent); }
+        .location-card:hover { transform: translateY(-5px); border-color: #ff00ff; box-shadow: 0 0 20px rgba(255,0,255,0.2); }
+        .card-badge { display: inline-block; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 700; margin-bottom: 1rem; border: 1px solid; text-transform: uppercase; }
+        .badge-safe { color: var(--accent-green); border-color: var(--accent-green); background: rgba(0,255,0,0.1); }
+        .badge-moderate { color: #ff00ff; border-color: #ff00ff; background: rgba(255,0,255,0.1); }
+        .badge-unsafe { color: var(--accent-orange); border-color: var(--accent-orange); background: rgba(255,85,0,0.1); }
+        .location-icon { font-size: 2.5rem; margin-bottom: 1rem; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; border: 2px solid; border-radius: 8px; }
+        .icon-safe { color: var(--accent-green); border-color: var(--accent-green); background: rgba(0,255,0,0.1); }
+        .icon-moderate { color: #ff00ff; border-color: #ff00ff; background: rgba(255,0,255,0.1); }
+        .icon-unsafe { color: var(--accent-orange); border-color: var(--accent-orange); background: rgba(255,85,0,0.1); }
+        .location-name { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; color: white; }
+        .location-address { font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .location-description { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; }
+        #map { height: 500px; border-radius: 12px; border: 1px solid var(--border-color); margin: 2rem auto; max-width: 1000px; }
+        #buddy-map { height: 500px; border-radius: 12px; border: 1px solid var(--border-color); margin: 2rem auto; max-width: 1200px; }
+        .map-section { padding: 2rem; background: var(--secondary-dark); border-radius: 12px; margin: 2rem auto; max-width: 1000px; }
+        .buddy-map-section { padding: 2rem; background: var(--secondary-dark); border-radius: 12px; margin: 2rem auto; max-width: 1200px; }
+        .map-title { color: white; font-size: 1.3rem; font-weight: 700; margin-bottom: 1rem; }
+
+        /* ── Buddy Tracking ── */
+        .buddy-tracking-section { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 100%); }
+        .hero-section-buddy { background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 50%, #1f1235 100%); padding: 4rem 2rem; text-align: center; }
+        .hero-title-buddy { font-size: 4.5rem; font-weight: 800; margin: 1rem 0; line-height: 1.1; text-shadow: 0 0 20px rgba(255,0,255,0.3); }
+        .hero-title-buddy .magenta-text { color: var(--accent-magenta); }
+        .hero-subtitle-buddy { font-size: 1.2rem; color: var(--text-muted); max-width: 900px; margin: 2rem auto; line-height: 1.6; }
+        .enable-tracking-section { background: linear-gradient(135deg,rgba(255,0,255,0.1) 0%,rgba(255,20,147,0.1) 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 2.5rem; margin: 3rem auto; max-width: 900px; display: flex; align-items: center; gap: 2rem; }
+        .tracking-icon { font-size: 4rem; color: var(--accent-magenta); width: 100px; text-align: center; }
+        .tracking-content { flex: 1; text-align: left; }
+        .tracking-title { font-size: 1.8rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .tracking-description { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .btn-start-tracking { background: var(--accent-magenta); color: white; border: none; padding: 0.9rem 2rem; border-radius: 8px; font-weight: 700; font-size: 1rem; transition: all 0.3s ease; cursor: pointer; }
+        .btn-start-tracking:hover { background: #ff00ff; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,0,255,0.3); color: white; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 2rem; max-width: 1200px; margin: 4rem auto; padding: 0 2rem; }
+        .feature-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; transition: all 0.3s ease; text-align: center; }
+        .feature-card:hover { border-color: var(--accent-magenta); box-shadow: 0 0 20px rgba(255,0,255,0.2); transform: translateY(-5px); }
+        .feature-icon { font-size: 3rem; margin-bottom: 1rem; width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border: 2px solid; border-radius: 12px; margin-left: auto; margin-right: auto; }
+        .feature-icon.cyan { color: #ff00ff; border-color: #ff00ff; background: rgba(255,0,255,0.1); }
+        .feature-icon.magenta { color: var(--accent-magenta); border-color: var(--accent-magenta); background: rgba(255,20,147,0.1); }
+        .feature-icon.green { color: var(--accent-green); border-color: var(--accent-green); background: rgba(0,255,0,0.1); }
+        .feature-title { font-size: 1.4rem; font-weight: 700; color: white; margin-bottom: 1rem; }
+        .feature-description { color: var(--text-muted); font-size: 1rem; line-height: 1.6; }
+        .buddies-section { padding: 4rem 2rem; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+        .section-title-buddy { font-size: 2rem; font-weight: 700; color: white; }
+        .btn-add-buddy { background: #ff00ff; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 700; transition: all 0.3s ease; cursor: pointer; }
+        .btn-add-buddy:hover { background: #ff1493; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,0,255,0.3); }
+        .buddies-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 2rem; max-width: 1400px; margin: 0 auto; }
+        .buddy-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; transition: all 0.3s ease; position: relative; }
+        .buddy-card::before { content: ''; position: absolute; top:0;left:0;right:0; height: 2px; background: linear-gradient(90deg, transparent, var(--accent-magenta), transparent); }
+        .buddy-card:hover { border-color: var(--accent-magenta); box-shadow: 0 0 20px rgba(255,0,255,0.2); transform: translateY(-5px); }
+        .buddy-status { position: absolute; top: 1.5rem; right: 1.5rem; width: 12px; height: 12px; border-radius: 50%; background: var(--accent-green); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .buddy-avatar { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-magenta), #ff00ff); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: white; margin-bottom: 1rem; }
+        .buddy-name { font-size: 1.2rem; font-weight: 700; color: white; margin-bottom: 0.5rem; }
+        .buddy-distance { font-size: 0.95rem; color: #ff00ff; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .buddy-address { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+        .buddy-actions { display: flex; gap: 0.75rem; }
+        .btn-buddy-action { flex: 1; padding: 0.6rem; border: 1px solid var(--border-color); background: transparent; color: var(--text-light); border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease; }
+        .btn-buddy-action:hover { border-color: var(--accent-magenta); color: var(--accent-magenta); }
+
+        /* ── Notifications / Chat ── */
+        .notification-container { position: fixed; top: 80px; right: 20px; z-index: 1000; max-width: 400px; }
+        .notification-toast { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-magenta); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; box-shadow: 0 5px 20px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; cursor: pointer; transition: all 0.3s ease; }
+        .notification-toast:hover { border-left-color: #ff00ff; transform: translateX(-5px); }
+        @keyframes slideIn { from{transform:translateX(400px);opacity:0} to{transform:translateX(0);opacity:1} }
+        .notification-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+        .notification-user { font-weight: 700; color: white; display: flex; align-items: center; gap: 0.5rem; }
+        .notification-time { font-size: 0.75rem; color: var(--text-muted); }
+        .notification-message { color: var(--text-light); font-size: 0.95rem; }
+        .chat-box { position: fixed; bottom: 20px; right: 20px; width: 350px; max-height: 500px; background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 1001; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from{transform:translateY(400px);opacity:0} to{transform:translateY(0);opacity:1} }
+        .chat-box.active { display: flex; }
+        .chat-header { background: linear-gradient(135deg, var(--accent-magenta), #ff00ff); padding: 1rem; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .chat-user-info { display: flex; align-items: center; gap: 0.75rem; }
+        .chat-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+        .chat-user-name { font-weight: 700; }
+        .btn-close-chat { background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; transition: transform 0.3s ease; }
+        .btn-close-chat:hover { transform: scale(1.2); }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .message { display: flex; gap: 0.5rem; margin-bottom: 0.5rem; }
+        .message.own { justify-content: flex-end; }
+        .message-bubble { max-width: 70%; padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.9rem; line-height: 1.4; }
+        .message-bubble.other { background: var(--border-color); color: var(--text-light); }
+        .message-bubble.own { background: linear-gradient(135deg, var(--accent-magenta), #ff00ff); color: white; }
+        .message-time { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+        .chat-input-section { padding: 1rem; border-top: 1px solid var(--border-color); display: flex; gap: 0.75rem; }
+        .chat-input { flex: 1; background: #1a0f2e; border: 1px solid var(--border-color); color: var(--text-light); padding: 0.75rem; border-radius: 6px; font-size: 0.9rem; }
+        .chat-input:focus { outline: none; border-color: var(--accent-magenta); }
+        .btn-send { background: var(--accent-magenta); color: white; border: none; padding: 0.75rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; }
+        .btn-send:hover { background: #ff00ff; transform: scale(1.05); }
+
+        /* ── ROUTE PLANNER SECTION ── */
+        .route-planner-section {
+            background: linear-gradient(135deg, #1a0f2e 0%, #2d1b47 100%);
+            min-height: 100vh;
+        }
+
+        .route-hero {
+            background: linear-gradient(135deg, #2d0a27 0%, #3e1640 50%, #460f3d 100%);
+            border-bottom: 2px solid #ff1493;
+            padding: 3rem 2rem;
+            text-align: center;
+        }
+
+        .route-hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            color: #ff1493;
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px #ff1493;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+        }
+
+        .route-hero p {
+            color: #ff69b4;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .route-main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .route-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .route-input-card {
+            background: rgba(0,0,0,0.4);
+            padding: 30px;
+            border: 2px solid #ff1493;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255,20,147,0.2);
+        }
+
+        .route-input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .route-input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ff69b4;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 1px;
+        }
+
+        .route-location-input,
+        .route-time-select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255,20,147,0.1);
+            border: 1px solid #ff1493;
+            border-radius: 5px;
+            color: #e0e0e0;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .route-location-input:focus,
+        .route-time-select:focus {
+            outline: none;
+            background: rgba(255,20,147,0.2);
+            border-color: #ff69b4;
+            box-shadow: 0 0 10px rgba(255,105,180,0.3);
+        }
+
+        .route-location-input::placeholder { color: #666; }
+
+        .route-suggestions-dropdown {
+            position: absolute;
+            top: 100%; left: 0; right: 0;
+            background: rgba(20,5,30,0.95);
+            border: 1px solid #ff1493;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+
+        .route-suggestions-dropdown.active { display: block; }
+
+        .route-suggestion-item {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,20,147,0.2);
+            transition: all 0.2s ease;
+            font-size: 14px;
+        }
+
+        .route-suggestion-item:hover { background: rgba(255,20,147,0.2); color: #ff69b4; }
+
+        .btn-suggest-route {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .btn-suggest-route:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(255,105,180,0.5); }
+
+        /* Route Results */
+        .route-results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .route-results-card {
+            background: rgba(0,0,0,0.4);
+            padding: 30px;
+            border: 2px solid #ff69b4;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255,105,180,0.2);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .route-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ff69b4;
+        }
+
+        .route-results-header h2 { color: #ff69b4; font-size: 20px; text-shadow: 0 0 10px #ff69b4; font-family: 'Orbitron', sans-serif; }
+
+        .btn-close-results {
+            background: none; border: none; color: #ff69b4; font-size: 24px; cursor: pointer; transition: all 0.2s ease;
+        }
+        .btn-close-results:hover { color: #ff1493; }
+
+        .route-detail-box {
+            margin-bottom: 25px;
+            padding: 15px;
+            background: rgba(255,20,147,0.05);
+            border-left: 3px solid #ff1493;
+            border-radius: 5px;
+        }
+
+        .route-detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,20,147,0.1);
+            font-size: 14px;
+        }
+
+        .route-detail-item:last-child { border-bottom: none; }
+        .route-detail-label { color: #ff1493; font-weight: bold; }
+        .route-detail-value { color: #e0e0e0; }
+
+        .route-cards-container { display: flex; flex-direction: column; gap: 15px; }
+
+        .route-option-card {
+            padding: 15px;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #ff1493;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .route-option-card:hover { background: rgba(255,20,147,0.15); border-color: #ff69b4; transform: translateX(5px); }
+        .route-option-card.active { background: rgba(255,105,180,0.2); border-color: #ff69b4; box-shadow: 0 0 15px rgba(255,105,180,0.3); }
+
+        .route-option-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .route-option-name { color: #ff69b4; font-weight: bold; font-size: 14px; }
+
+        .route-safety-badge { padding: 3px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .safety-high { background: #00ff88; color: #000; }
+        .safety-medium { background: #ffaa00; color: #000; }
+        .safety-low { background: #ff0055; color: #fff; }
+
+        .route-option-info { display: flex; justify-content: space-between; font-size: 13px; color: #b0b0b0; margin: 5px 0; }
+
+        /* Route Map */
+        .route-map-card {
+            border: 2px solid #ff1493;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(255,20,147,0.2);
+            position: relative;
+            min-height: 600px;
+        }
+
+        #route-map { width: 100%; height: 100%; min-height: 600px; border-radius: 8px; }
+
+        .route-map-buttons {
+            position: absolute;
+            top: 10px; right: 10px;
+            z-index: 1000;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .route-map-btn {
+            padding: 10px 15px;
+            background: rgba(255,20,147,0.9);
+            border: 1px solid #ff69b4;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .route-map-btn:hover { background: #ff1493; box-shadow: 0 0 15px rgba(255,105,180,0.5); }
+
+        .route-error-box {
+            background: rgba(255,0,85,0.2);
+            border: 2px solid #ff1493;
+            border-radius: 5px;
+            padding: 20px;
+            color: #ff6699;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        /* Route planner map info panel */
+        .route-info-panel {
+            background: rgba(0,0,0,0.4);
+            padding: 20px;
+            border: 1px solid #ff1493;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 14px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--primary-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #ff00ff; }
+
+        @media (max-width: 1024px) {
+            .route-grid, .route-results-grid { grid-template-columns: 1fr; }
+            .route-map-card { min-height: 400px; }
+            #route-map { min-height: 400px; }
+        }
+
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.5rem; }
+            .hero-title-map, .hero-title-buddy { font-size: 2.5rem; }
+            .route-hero h1 { font-size: 1.8rem; }
+            .enable-tracking-section { flex-direction: column; text-align: center; }
+            .tracking-content { text-align: center; }
+            .chat-box { width: calc(100vw - 40px); max-height: 70vh; }
+            .search-container { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ═══════════ NAVBAR ═══════════ -->
+    <nav class="navbar navbar-dark navbar-expand-lg">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand" href="#" onclick="showHome(); return false;">
+                <div class="shield-icon">🛡️</div>
+                <div>
+                    <div style="font-size:16px;font-weight:700;font-family:'Orbitron',sans-serif;color:#fff;">Digital Sentinel</div>
+                    <div class="navbar-brand-subtitle">Safety First</div>
+                </div>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item"><a class="nav-link active" href="#" onclick="showHome(); return false;" id="navHome">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showSafetyMap(); return false;" id="navMap">Safety Map</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showBuddyTracking(); return false;" id="navBuddy">Buddy Tracking</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showRoutePlanner(); return false;" id="navRoute">Route Planner</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="openEmergency(); return false;" id="navEmergency" style="color:#ff4444;font-weight:700;letter-spacing:1px;">🚨 Emergency</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#" onclick="showStressPattern(); return false;" id="navStress" style="color:#e0e0e0;">Stress Pattern Logging</a></li>
+                    <li class="nav-item">
+                        <div class="notification-bell" onclick="toggleNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <div class="notification-count" id="notificationCount">0</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <button class="sos-btn-large" onclick="triggerSOS()">
+                <span class="sos-pulse-ring"></span>
+                <span class="sos-pulse-ring sos-ring-2"></span>
+                🆘 SOS
+            </button>
+        </div>
+    </nav>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notificationContainer"></div>
+
+    <!-- Chat Box -->
+    <div class="chat-box" id="chatBox">
+        <div class="chat-header">
+            <div class="chat-user-info">
+                <div class="chat-avatar"><i class="fas fa-user"></i></div>
+                <div class="chat-user-name" id="chatUserName">Buddy Name</div>
+            </div>
+            <button class="btn-close-chat" onclick="closeChatBox()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input-section">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Type a message...">
+            <button class="btn-send" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <!-- ═══════════ WOMEN HELPLINE FLOATING TICKER ═══════════ -->
+    <div id="womenHelplineTicker" style="
+        background: linear-gradient(90deg, #6a0040, #3d0028, #6a0040);
+        border-top: 2px solid #ff69b4;
+        border-bottom: 2px solid #ff69b4;
+        padding: 10px 0;
+        overflow: hidden;
+        position: relative;
+        z-index: 100;
+        box-shadow: 0 0 20px rgba(255,105,180,0.3);
+    ">
+        <div style="display:flex;align-items:center;gap:0;white-space:nowrap;animation:tickerScroll 28s linear infinite;">
+            <span style="color:#ff69b4;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;padding:0 60px;">
+                🆘 WOMEN IN DISTRESS? CALL NOW → &nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">1092</span>
+                &nbsp;— Tamil Nadu Women Helpline &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">181</span>
+                &nbsp;— National Women Helpline &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">112</span>
+                &nbsp;— Emergency SOS &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">100</span>
+                &nbsp;— Police &nbsp;|&nbsp;
+                <span style="color:#ffaa44;font-size:12px;"> YOU ARE NOT ALONE. HELP IS ONE CALL AWAY. </span>
+            </span>
+            <span style="color:#ff69b4;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;padding:0 60px;">
+                🆘 WOMEN IN DISTRESS? CALL NOW → &nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">1092</span>
+                &nbsp;— Tamil Nadu Women Helpline &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">181</span>
+                &nbsp;— National Women Helpline &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">112</span>
+                &nbsp;— Emergency SOS &nbsp;|&nbsp;
+                <span style="color:#fff;font-size:14px;font-weight:900;text-shadow:0 0 10px #ff69b4;">100</span>
+                &nbsp;— Police &nbsp;|&nbsp;
+                <span style="color:#ffaa44;font-size:12px;"> YOU ARE NOT ALONE. HELP IS ONE CALL AWAY. </span>
+            </span>
+        </div>
+        <style>
+            @keyframes tickerScroll {
+                0%   { transform: translateX(0); }
+                100% { transform: translateX(-50%); }
+            }
+        </style>
+    </div>
+
+    <!-- ═══════════ HOME SECTION ═══════════ -->
+    <section id="homeSection" class="hero-section">
+        <div style="position:absolute;top:10%;right:5%;width:300px;height:300px;border:2px solid rgba(255,0,255,0.2);border-radius:50%;animation:float 8s ease-in-out infinite;opacity:0.3;"></div>
+        <div style="position:absolute;bottom:10%;left:5%;width:400px;height:400px;border:2px solid rgba(255,0,255,0.1);animation:float 10s ease-in-out infinite;opacity:0.2;"></div>
+        <div class="hero-container text-center">
+            <div class="hero-label">SYS.INIT // DIGITAL SENTINEL ONLINE</div>
+            <h1 class="hero-title"><span class="hero-title-absolute" style="color:#9ca3af;">ABSOLUTE</span></h1>
+            <h1 class="hero-title"><span class="hero-title-security cyan-text">SECURITY</span></h1>
+            <p class="hero-subtitle">ADVANCED SPATIAL MONITORING. REAL-TIME THREAT ASSESSMENT.<br>NAVIGATE THE PHYSICAL WORLD WITH DIGITAL OVERWATCH.</p>
+            <div class="scroll-label">SCROLL TO INITIALIZE</div>
+            <div style="text-align:center;margin-bottom:2rem;">
+                <button class="btn-custom btn-custom-cyan" onclick="showSafetyMap()"><i class="fas fa-map"></i> SMART MAPPING</button>
+                <button class="btn-custom btn-custom-red" data-bs-toggle="modal" data-bs-target="#emergencyModal"><i class="fas fa-exclamation"></i> EMERGENCY OVERRIDE</button>
+            </div>
+            <div class="stats-container">
+                <div class="stat-item"><span class="stat-label">ACTIVE NODES:</span><br><span class="stat-value" style="color:#00ff00;">1,405</span></div>
+                <div class="stat-item"><span class="stat-label">THREAT LEVEL:</span><br><span class="stat-value" style="color:#ff00ff;">MONITORING</span></div>
+                <div class="stat-item"><span class="stat-label">NETWORK:</span><br><span class="stat-value" style="color:#ff00ff;">SECURE</span></div>
+                <div class="stat-item"><span class="stat-label">SYSTEM STATUS:</span><br><span class="stat-value" style="color:#00ff00;">OPTIMAL</span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ MODULES SECTION ═══════════ -->
+    <section id="modulesSection" class="modules-section">
+        <div class="container" style="max-width:1200px;">
+            <div class="text-center mb-5">
+                <h2 class="section-title">CORE <span class="cyan-text">MODULES</span></h2>
+                <p class="section-subtitle">SELECT A SUBSYSTEM TO ENGAGE</p>
+            </div>
+            <div class="row g-4">
+                <!-- Smart Mapping -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-cyan" style="padding:0;">
+                        <div class="map-container">
+                            <div style="font-size:48px;margin-bottom:15px;">🗺️</div>
+                            <div style="font-size:14px;color:#ff00ff;font-family:'Orbitron',sans-serif;letter-spacing:1px;text-align:center;">RIT CAMPUS CHENNAI</div>
+                            <div style="font-size:12px;color:#9ca3af;margin-top:10px;">📍 12.8239°N, 79.8877°E</div>
+                        </div>
+                        <div style="padding:25px;">
+                            <div class="module-label cyan">MOD_01 | LIVE DATA</div>
+                            <div class="module-title">📍 SMART MAPPING</div>
+                            <p class="module-description">Real-time visualization of safe and unsafe zones with detailed safety ratings and user reports.</p>
+                            <button class="btn-custom btn-custom-cyan" onclick="showSafetyMap()" style="width:100%;padding:8px 16px;margin-top:10px;">🔗 OPEN MAP</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Buddy Tracking -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-magenta" style="padding:25px;">
+                        <div class="module-label magenta">MOD_02 | SYNCED</div>
+                        <div class="module-title">👥 BUDDY TRACKING</div>
+                        <p class="module-description">Connect with friends and family. Share live location, get real-time alerts, and ensure everyone stays safe.</p>
+                        <button class="btn-custom btn-custom-cyan" onclick="showBuddyTracking()" style="margin-top:1rem;padding:8px 20px;width:100%;">ACTIVATE</button>
+                        <div class="module-icon">👥</div>
+                    </div>
+                </div>
+                <!-- Safe Route Suggester -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-green" style="padding:25px;">
+                        <div class="module-label green">MOD_03 | ACTIVE</div>
+                        <div class="module-title">🚀 SAFE ROUTE SUGGESTER</div>
+                        <p class="module-description">AI-powered route recommendations based on real-time threat assessment and historical safety data.</p>
+                        <button class="btn-custom btn-custom-cyan" onclick="showRoutePlanner()" style="border-color:#00ff00;color:#00ff00;margin-top:1rem;padding:8px 20px;width:100%;">🔗 OPEN PLANNER</button>
+                        <div class="module-icon">🛣️</div>
+                    </div>
+                </div>
+                <!-- Threat Analysis -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-cyan" style="padding:25px;">
+                        <div class="module-label cyan">MOD_04 | MONITOR</div>
+                        <div class="module-title">🎯 THREAT ANALYSIS</div>
+                        <p class="module-description">Advanced threat detection with machine learning models analyzing incident patterns and risk zones.</p>
+                        <div style="margin-top:1rem;opacity:0.5;">Coming Soon</div>
+                        <div class="module-icon">🔍</div>
+                    </div>
+                </div>
+                <!-- Emergency -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-red" style="padding:25px;">
+                        <div class="module-label red">MOD_05 | CRITICAL</div>
+                        <div class="module-title">🚨 EMERGENCY OVERRIDE</div>
+                        <p class="module-description">Direct emergency contacts with one-click activation. Police, Fire, Ambulance, and local authorities.</p>
+                        <button class="btn-custom btn-custom-red" data-bs-toggle="modal" data-bs-target="#emergencyModal" style="margin-top:1rem;padding:8px 20px;">ACTIVATE</button>
+                        <div class="module-icon">📞</div>
+                    </div>
+                </div>
+                <!-- Stress Pattern Logging -->
+                <div class="col-lg-4 col-md-6">
+                    <div class="module-card module-card-magenta" style="padding:25px;">
+                        <div class="module-label magenta">MOD_06 | PHYSIOLOGICAL</div>
+                        <div class="module-title">💓 STRESS PATTERN LOGGING</div>
+                        <p class="module-description">Journey stress analyzer that records heart rate data, detects stress spikes along the route, and crowdsources physiological danger signals to the community safety map.</p>
+                        <button class="btn-custom btn-custom-cyan" onclick="showStressPattern()" style="margin-top:1rem;padding:8px 20px;width:100%;border-color:#ff1493;color:#ff1493;">⚡ OPEN MODULE</button>
+                        <div class="module-icon">❤️</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════ SAFETY MAP SECTION ═══════════ -->
+    <section id="safetyMapSection" class="safety-map-section hidden">
+        <button class="btn-back" onclick="showHome()"><i class="fas fa-arrow-left"></i> Back to Home</button>
+        <div class="hero-section-map">
+            <div class="safety-map-badge"><i class="fas fa-map-marker-alt"></i> SMART MAPPING</div>
+            <h1 class="hero-title-map">Smart <span class="pink-text">Mapping</span></h1>
+            <p class="hero-subtitle-map">Real-time safety information for locations worldwide with intelligent mapping technology.</p>
+            <div class="location-display">
+                <div class="location-display-item">
+                    <div class="location-icon-display"><i class="fas fa-globe"></i></div>
+                    <div class="location-info"><div class="location-label">Country</div><div class="location-value" id="country">India</div></div>
+                </div>
+                <div class="location-display-item">
+                    <div class="location-icon-display"><i class="fas fa-map"></i></div>
+                    <div class="location-info"><div class="location-label">State/Region</div><div class="location-value" id="state">Tamil Nadu</div></div>
+                </div>
+                <div class="location-display-item">
+                    <div class="location-icon-display"><i class="fas fa-city"></i></div>
+                    <div class="location-info"><div class="location-label">City</div><div class="location-value" id="city">Chennai</div></div>
+                </div>
+                <div class="location-display-item">
+                    <div class="location-icon-display"><i class="fas fa-location-dot"></i></div>
+                    <div class="location-info"><div class="location-label">Coordinates</div><div class="location-value" id="coordinates">13.0827, 80.2707</div></div>
+                </div>
+                <button class="get-location-btn" onclick="getCurrentLocation()"><i class="fas fa-location-crosshairs"></i><span>Get My Current Location</span></button>
+                <div id="locationStatus"></div>
+            </div>
+            <div class="search-section">
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="search-input" placeholder="Search by area, city, or country...">
+                    </div>
+                    <div class="filter-wrapper">
+                        <i class="fas fa-filter filter-icon"></i>
+                        <select class="filter-select">
+                            <option>All Safety Levels</option>
+                            <option>Safe</option>
+                            <option>Moderate</option>
+                            <option>Unsafe</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <section class="map-section">
+            <div class="map-title"><i class="fas fa-map"></i> Live Location Map</div>
+            <div id="map"></div>
+        </section>
+        <section class="locations-section">
+            <h2 class="section-title-map">Popular Places Around <span class="pink-text" id="cityName">Chennai</span></h2>
+            <div class="location-cards" id="popularPlacesContainer"></div>
+        </section>
+    </section>
+
+    <!-- ═══════════ BUDDY TRACKING SECTION ═══════════ -->
+    <section id="buddyTrackingSection" class="buddy-tracking-section hidden">
+        <button class="btn-back" onclick="showHome()"><i class="fas fa-arrow-left"></i> Back to Home</button>
+        <div class="hero-section-buddy">
+            <h1 class="hero-title-buddy">Buddy <span class="magenta-text">Tracking</span></h1>
+            <p class="hero-subtitle-buddy">Connect with fellow travelers on the same route. Track each other in real-time for mutual safety.</p>
+        </div>
+        <div class="enable-tracking-section">
+            <div class="tracking-icon"><i class="fas fa-users"></i></div>
+            <div class="tracking-content">
+                <div class="tracking-title">Enable Buddy Tracking</div>
+                <div class="tracking-description">Share your location with trusted travel companions</div>
+                <button class="btn-start-tracking" onclick="startBuddyTracking()"><i class="fas fa-play-circle"></i> Start Tracking</button>
+            </div>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon cyan"><i class="fas fa-map-pin"></i></div>
+                <div class="feature-title">Real-Time Location</div>
+                <div class="feature-description">See your buddies' live locations on the map as they travel</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon magenta"><i class="fas fa-directions"></i></div>
+                <div class="feature-title">Route Matching</div>
+                <div class="feature-description">Find travelers going the same way for safer journeys</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon green"><i class="fas fa-share-alt"></i></div>
+                <div class="feature-title">Instant Alerts</div>
+                <div class="feature-description">Get notified if a buddy deviates from their route</div>
+            </div>
+        </div>
+        <section class="buddy-map-section">
+            <div class="map-title"><i class="fas fa-map"></i> Buddy Location Map - Chennai</div>
+            <div id="buddy-map"></div>
+        </section>
+        <section class="buddies-section">
+            <div class="section-header">
+                <h2 class="section-title-buddy">Your Travel Buddies</h2>
+                <button class="btn btn-add-buddy" onclick="openAddBuddyModal()"><i class="fas fa-plus"></i> Add Buddy</button>
+            </div>
+            <div class="buddies-container" id="buddiesContainer"></div>
+        </section>
+    </section>
+
+    <!-- ═══════════ ROUTE PLANNER SECTION ═══════════ -->
+    <section id="routePlannerSection" class="route-planner-section hidden">
+        <button class="btn-back" onclick="showHome()"><i class="fas fa-arrow-left"></i> Back to Home</button>
+
+        <div class="route-hero">
+            <div style="display:flex;align-items:center;justify-content:center;gap:15px;margin-bottom:10px;">
+                <span style="font-size:40px;">🛡️</span>
+                <h1>Safe Route Suggester</h1>
+            </div>
+            <p>🇮🇳 Tamil Nadu Route Safety Assistant | Safe travel across TN cities</p>
+        </div>
+
+        <div class="route-main">
+            <!-- Input Grid -->
+            <div class="route-grid">
+                <div class="route-input-card">
+                    <div class="route-input-group">
+                        <label><span>📍 </span> From Location (Tamil Nadu)</label>
+                        <input type="text" id="from-location" class="route-location-input" placeholder="e.g., Chennai, Madurai, Coimbatore" autocomplete="off">
+                        <div id="from-suggestions" class="route-suggestions-dropdown"></div>
+                    </div>
+                    <div class="route-input-group">
+                        <label><span>📍 </span> To Location (Tamil Nadu)</label>
+                        <input type="text" id="to-location" class="route-location-input" placeholder="e.g., Trichy, Salem, Kanyakumari" autocomplete="off">
+                        <div id="to-suggestions" class="route-suggestions-dropdown"></div>
+                    </div>
+                    <div class="route-input-group">
+                        <label><span>⏰ </span> Travel Time</label>
+                        <select id="travel-time" class="route-time-select">
+                            <option value="">Select travel time</option>
+                            <option value="morning">Morning (6 AM – 12 PM)</option>
+                            <option value="afternoon">Afternoon (12 PM – 6 PM)</option>
+                            <option value="evening">Evening (6 PM – 9 PM)</option>
+                            <option value="night">Night (9 PM – 6 AM)</option>
+                        </select>
+                    </div>
+                    <button class="btn-suggest-route" id="suggest-btn">
+                        <span>🚀</span> Suggest Safe Route
+                    </button>
+                    <div class="route-error-box" id="error-message" style="display:none;"></div>
+                </div>
+
+                <!-- Map always visible on right -->
+                <div class="route-map-card">
+                    <div class="route-map-buttons">
+                        <button class="route-map-btn" onclick="routeOpenGoogleMaps()">🔗 Google Maps</button>
+                        <button class="route-map-btn" onclick="routeOpenAppleMaps()">🔗 Apple Maps</button>
+                        <button class="route-map-btn" onclick="routeCopyURL()">📋 Copy URL</button>
+                    </div>
+                    <div id="route-map"></div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="route-results-grid" id="route-results-section" style="display:none;">
+                <div class="route-results-card">
+                    <div class="route-results-header">
+                        <h2>Suggested Safe Routes</h2>
+                        <button class="btn-close-results" id="close-route-results">✕</button>
+                    </div>
+                    <div class="route-detail-box">
+                        <div class="route-detail-item"><span class="route-detail-label">From:</span><span class="route-detail-value" id="result-from"></span></div>
+                        <div class="route-detail-item"><span class="route-detail-label">To:</span><span class="route-detail-value" id="result-to"></span></div>
+                        <div class="route-detail-item"><span class="route-detail-label">Travel Time:</span><span class="route-detail-value" id="result-time"></span></div>
+                        <div class="route-detail-item"><span class="route-detail-label">Overall Safety Score:</span><span class="route-detail-value" id="result-safety"></span></div>
+                    </div>
+                    <div class="route-cards-container" id="routes-container"></div>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);border:1px solid #ff1493;border-radius:10px;padding:2rem;">
+                    <p style="color:#9ca3af;text-align:center;font-size:1rem;">The route is shown on the map above. Select a route card to highlight it.</p>
+                </div>
+            </div>
+        </div>
+
+        <footer style="text-align:center;padding:20px;border-top:2px solid #ff1493;color:#ff1493;font-size:14px;margin-top:40px;">
+            🔒 Your safety is our priority | Real-time threat assessment powered by AI | Tamil Nadu Routes
+        </footer>
+    </section>
+
+    <!-- ═══════════ EMERGENCY STYLES ═══════════ -->
+    <style>
+        @keyframes redBlink {
+            0%,100% { background: rgba(255,0,0,0.25); box-shadow: 0 0 30px rgba(255,0,0,0.6), inset 0 0 20px rgba(255,0,0,0.2); }
+            50%      { background: rgba(255,0,0,0.08); box-shadow: 0 0 8px rgba(255,0,0,0.2); }
+        }
+        @keyframes alertTextBlink {
+            0%,100% { opacity: 1; text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; }
+            50%      { opacity: 0.6; text-shadow: none; }
+        }
+        @keyframes lightBlink {
+            0%,100% { background: #ff0000; box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; }
+            50%      { background: #550000; box-shadow: none; }
+        }
+        @keyframes lightBlinkB {
+            0%,100% { background: #550000; box-shadow: none; }
+            50%      { background: #ff0000; box-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000; }
+        }
+        @keyframes borderPulse {
+            0%,100% { border-color: #ff0000; box-shadow: 0 0 0 0 rgba(255,0,0,0.5), 0 0 30px rgba(255,0,0,0.4); }
+            50%      { border-color: #ff6666; box-shadow: 0 0 0 8px rgba(255,0,0,0), 0 0 60px rgba(255,0,0,0.7); }
+        }
+        @keyframes scanline {
+            0%   { top: -5%; }
+            100% { top: 105%; }
+        }
+
+        #emergencyModal .modal-content {
+            background: #0a0000 !important;
+            border: 3px solid #ff0000 !important;
+            border-radius: 10px !important;
+            animation: borderPulse 1.2s ease-in-out infinite;
+            position: relative;
+            overflow: hidden;
+        }
+        #emergencyModal .modal-content::before {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, rgba(255,0,0,0.6), transparent);
+            animation: scanline 3s linear infinite;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .em-header {
+            background: linear-gradient(135deg, #1a0000 0%, #300000 100%);
+            border-bottom: 2px solid #ff0000;
+            padding: 20px 25px;
+            position: relative;
+            z-index: 1;
+            animation: redBlink 1.2s ease-in-out infinite;
+        }
+        .em-lights {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .em-light {
+            width: 18px; height: 18px;
+            border-radius: 50%;
+            border: 2px solid #ff4444;
+        }
+        .em-light-a { animation: lightBlink 0.6s ease-in-out infinite; }
+        .em-light-b { animation: lightBlinkB 0.6s ease-in-out infinite; }
+        .em-title {
+            font-family: 'Orbitron', sans-serif;
+            color: #ff0000;
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: 3px;
+            text-align: center;
+            animation: alertTextBlink 1s ease-in-out infinite;
+        }
+        .em-body {
+            background: #0d0000;
+            padding: 22px;
+            position: relative;
+            z-index: 1;
+        }
+        .em-location-bar {
+            background: linear-gradient(90deg, rgba(255,0,0,0.15), rgba(255,0,0,0.05), rgba(255,0,0,0.15));
+            border: 1px solid rgba(255,0,0,0.5);
+            border-radius: 6px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            font-size: 12px;
+            color: #ff9999;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+        .em-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #00ff44;
+            animation: lightBlink 1s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+        .em-section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #ff4444;
+            margin: 16px 0 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,0,0,0.3);
+            text-transform: uppercase;
+        }
+        .em-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+        .em-grid-2 { grid-template-columns: 1fr 1fr; }
+        .em-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .em-card {
+            background: linear-gradient(135deg, rgba(255,0,0,0.12) 0%, rgba(80,0,0,0.2) 100%);
+            border: 1px solid rgba(255,0,0,0.4);
+            border-radius: 8px;
+            padding: 14px 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .em-card:hover {
+            border-color: #ff0000;
+            background: rgba(255,0,0,0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 0 20px rgba(255,0,0,0.4);
+        }
+        .em-card-icon { font-size: 28px; margin-bottom: 6px; }
+        .em-card-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+        }
+        .em-card-sub { font-size: 10px; color: #888; margin-bottom: 10px; }
+        .em-btn-call {
+            display: block;
+            width: 100%;
+            padding: 8px 6px;
+            background: #cc0000;
+            border: 1px solid #ff0000;
+            border-radius: 5px;
+            color: white;
+            font-weight: 700;
+            font-size: 12px;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            margin-bottom: 5px;
+        }
+        .em-btn-call:hover {
+            background: #ff0000;
+            box-shadow: 0 0 15px rgba(255,0,0,0.6);
+            color: white;
+            text-decoration: none;
+        }
+        .em-btn-sms {
+            display: block;
+            width: 100%;
+            padding: 7px 6px;
+            background: transparent;
+            border: 1px solid rgba(255,100,100,0.5);
+            border-radius: 5px;
+            color: #ff9999;
+            font-weight: 700;
+            font-size: 11px;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .em-btn-sms:hover {
+            background: rgba(255,0,0,0.15);
+            border-color: #ff4444;
+            color: #ffcccc;
+            text-decoration: none;
+        }
+        .em-family-card {
+            background: linear-gradient(135deg, rgba(255,0,0,0.08) 0%, rgba(60,0,0,0.2) 100%);
+            border: 1px solid rgba(255,100,100,0.35);
+            border-radius: 8px;
+            padding: 14px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 8px;
+            transition: all 0.2s ease;
+        }
+        .em-family-card:hover {
+            border-color: #ff4444;
+            background: rgba(255,0,0,0.15);
+            box-shadow: 0 0 15px rgba(255,0,0,0.25);
+        }
+        .em-family-avatar {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #660000, #cc0000);
+            border: 2px solid #ff4444;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .em-family-info { flex: 1; }
+        .em-family-name { font-family: 'Orbitron', sans-serif; font-size: 13px; font-weight: 700; color: #fff; }
+        .em-family-rel  { font-size: 11px; color: #ff9999; margin-bottom: 2px; }
+        .em-family-num  { font-size: 12px; color: #ffcccc; font-family: 'Orbitron', sans-serif; }
+        .em-family-btns { display: flex; gap: 6px; flex-shrink: 0; }
+        .em-fam-call {
+            width: 36px; height: 36px;
+            background: #cc0000;
+            border: 1px solid #ff0000;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .em-fam-call:hover { background: #ff0000; box-shadow: 0 0 15px rgba(255,0,0,0.6); color: white; }
+        .em-fam-sms {
+            width: 36px; height: 36px;
+            background: transparent;
+            border: 1px solid rgba(255,100,100,0.5);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #ff9999;
+            font-size: 14px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .em-fam-sms:hover { background: rgba(255,0,0,0.2); border-color: #ff4444; color: #fff; }
+        .em-footer-bar {
+            background: linear-gradient(135deg, #0d0000, #1a0000);
+            border-top: 2px solid rgba(255,0,0,0.4);
+            padding: 14px 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+        .em-status-tag {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            color: #ff4444;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .em-close-btn {
+            background: rgba(255,0,0,0.15);
+            border: 1px solid rgba(255,0,0,0.4);
+            color: #ff9999;
+            padding: 8px 20px;
+            border-radius: 5px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .em-close-btn:hover { background: rgba(255,0,0,0.3); border-color: #ff0000; color: #fff; }
+        @media (max-width: 576px) {
+            .em-grid-2, .em-grid-3 { grid-template-columns: 1fr 1fr; }
+            .em-family-card { flex-wrap: wrap; }
+        }
+    </style>
+
+    <!-- ═══════════ EMERGENCY MODAL ═══════════ -->
+    <div class="modal fade" id="emergencyModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+
+                <!-- Blinking Header -->
+                <div class="em-header">
+                    <div class="em-lights">
+                        <div class="em-light em-light-a"></div>
+                        <div class="em-light em-light-b"></div>
+                        <div class="em-light em-light-a"></div>
+                        <div class="em-light em-light-b"></div>
+                        <div class="em-light em-light-a"></div>
+                        <div class="em-light em-light-b"></div>
+                        <div class="em-light em-light-a"></div>
+                        <div class="em-light em-light-b"></div>
+                        <div class="em-light em-light-a"></div>
+                    </div>
+                    <div class="em-title">🚨 &nbsp; EMERGENCY OVERRIDE ACTIVATED &nbsp; 🚨</div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="position:absolute;top:16px;right:16px;filter:invert(1);opacity:0.7;"></button>
+                </div>
+
+                <!-- Body -->
+                <div class="em-body">
+
+                    <!-- Location bar -->
+                    <div class="em-location-bar">
+                        <div class="em-dot"></div>
+                        <span id="emLocationText">📍 DETECTING LOCATION... &nbsp;|&nbsp; RESPONDERS NOTIFIED</span>
+                    </div>
+
+                    <!-- Women Helpline Quick Bar -->
+                    <div style="background:linear-gradient(90deg,rgba(120,0,80,0.35),rgba(80,0,50,0.5),rgba(120,0,80,0.35));border:1px solid rgba(255,105,180,0.5);border-radius:6px;padding:9px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                        <span style="font-family:'Orbitron',sans-serif;font-size:11px;color:#ff69b4;letter-spacing:1px;">👩 WOMEN HELPLINE</span>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <a href="tel:1092" style="background:#7a0050;border:1px solid #ff69b4;border-radius:5px;color:#fff;padding:5px 14px;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;text-decoration:none;">📞 1092 — Tamil Nadu</a>
+                            <a href="tel:181"  style="background:#550036;border:1px solid rgba(255,105,180,0.6);border-radius:5px;color:#ffb3d9;padding:5px 14px;font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;text-decoration:none;">📞 181 — National</a>
+                        </div>
+                    </div>
+                    <div class="em-section-title">⚡ Emergency Services — Instant Call</div>
+                    <div class="em-grid em-grid-3" style="margin-bottom:14px;">
+                        <div class="em-card">
+                            <div class="em-card-icon">🚔</div>
+                            <div class="em-card-name">POLICE</div>
+                            <div class="em-card-sub">Emergency Response</div>
+                            <a href="tel:100" class="em-btn-call">📞 CALL 100</a>
+                            <a href="sms:100?body=EMERGENCY! I need immediate police help. My location: Chennai, Tamil Nadu. Please send help NOW." class="em-btn-sms">💬 SMS 100</a>
+                        </div>
+                        <div class="em-card">
+                            <div class="em-card-icon">🚑</div>
+                            <div class="em-card-name">AMBULANCE</div>
+                            <div class="em-card-sub">Medical Emergency</div>
+                            <a href="tel:108" class="em-btn-call">📞 CALL 108</a>
+                            <a href="sms:108?body=EMERGENCY! Medical help needed urgently. My location: Chennai, Tamil Nadu." class="em-btn-sms">💬 SMS 108</a>
+                        </div>
+                        <div class="em-card">
+                            <div class="em-card-icon">🚒</div>
+                            <div class="em-card-name">FIRE</div>
+                            <div class="em-card-sub">Fire Emergency</div>
+                            <a href="tel:101" class="em-btn-call">📞 CALL 101</a>
+                            <a href="sms:101?body=FIRE EMERGENCY! Immediate help needed. Location: Chennai, Tamil Nadu." class="em-btn-sms">💬 SMS 101</a>
+                        </div>
+                        <div class="em-card">
+                            <div class="em-card-icon">🆘</div>
+                            <div class="em-card-name">NATIONAL SOS</div>
+                            <div class="em-card-sub">All-in-One Emergency</div>
+                            <a href="tel:112" class="em-btn-call">📞 CALL 112</a>
+                            <a href="sms:112?body=SOS! I am in danger and need immediate help. Chennai, Tamil Nadu, India." class="em-btn-sms">💬 SMS 112</a>
+                        </div>
+                        <div class="em-card">
+                            <div class="em-card-icon">👩</div>
+                            <div class="em-card-name">WOMEN HELPLINE</div>
+                            <div class="em-card-sub">Women in Distress</div>
+                            <a href="tel:181" class="em-btn-call">📞 CALL 181</a>
+                            <a href="sms:181?body=I am a woman in danger. I need immediate help. Location: Chennai, Tamil Nadu. Please respond URGENT." class="em-btn-sms">💬 SMS 181</a>
+                        </div>
+                        <div class="em-card">
+                            <div class="em-card-icon">🏥</div>
+                            <div class="em-card-name">DISASTER MGMT</div>
+                            <div class="em-card-sub">NDRF / Civil Defence</div>
+                            <a href="tel:1078" class="em-btn-call">📞 CALL 1078</a>
+                            <a href="sms:1078?body=DISASTER EMERGENCY! I need civil defence help immediately. Location: Chennai, Tamil Nadu." class="em-btn-sms">💬 SMS 1078</a>
+                        </div>
+                        <div class="em-card" style="border-color:rgba(255,105,180,0.6);background:linear-gradient(135deg,rgba(120,0,80,0.2) 0%,rgba(80,0,50,0.3) 100%);">
+                            <div class="em-card-icon">🆘</div>
+                            <div class="em-card-name" style="color:#ff69b4;">TN WOMEN</div>
+                            <div class="em-card-sub">Tamil Nadu Helpline</div>
+                            <a href="tel:1092" class="em-btn-call" style="background:#7a0050;border-color:#ff69b4;">📞 CALL 1092</a>
+                            <a href="sms:1092?body=I am a woman in danger in Tamil Nadu. I need immediate help. Please respond URGENT." class="em-btn-sms" style="border-color:rgba(255,105,180,0.5);color:#ff69b4;">💬 SMS 1092</a>
+                        </div>
+                    </div>
+
+                    <!-- Nearby Police Station -->
+                    <div class="em-section-title">🏢 Nearest Police Station — Live Location</div>
+                    <div class="em-card" id="policeStationCard" style="margin-bottom:14px;text-align:left;padding:14px 16px;">
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="font-size:30px;">🏛️</div>
+                            <div style="flex:1;" id="policeStationInfo">
+                                <div class="em-card-name" style="text-align:left;margin-bottom:2px;" id="policeStationName">Locating nearest station...</div>
+                                <div class="em-card-sub" style="text-align:left;margin-bottom:8px;" id="policeStationAddr"><span style="color:#ffaa44;">📡 Fetching your location…</span></div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap;" id="policeStationBtns">
+                                    <button class="em-btn-call" style="flex:1;min-width:120px;margin-bottom:0;opacity:0.5;" disabled>📞 Locating...</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Family Contacts -->
+                    <div class="em-section-title">👨‍👩‍👧 Family &amp; Friends — Alert Now</div>
+
+                    <!-- Mom -->
+                    <div class="em-family-card">
+                        <div class="em-family-avatar">👩</div>
+                        <div class="em-family-info">
+                            <div class="em-family-name">Mom</div>
+                            <div class="em-family-rel">Family — Primary Contact</div>
+                            <div class="em-family-num">+91 78457 84596</div>
+                        </div>
+                        <div class="em-family-btns">
+                            <a href="tel:7845784596" class="em-fam-call" title="Call Mom"><i class="fas fa-phone"></i></a>
+                            <a href="sms:7845784596?body=MOM, I NEED HELP! I am in an emergency situation. Please call me immediately or contact police. Location: Chennai, Tamil Nadu. — URGENT 🚨" class="em-fam-sms" title="SMS Mom"><i class="fas fa-comment-sms"></i></a>
+                        </div>
+                    </div>
+
+                    <!-- John -->
+                    <div class="em-family-card">
+                        <div class="em-family-avatar">👦</div>
+                        <div class="em-family-info">
+                            <div class="em-family-name">John</div>
+                            <div class="em-family-rel">Friend — Trusted Contact</div>
+                            <div class="em-family-num">+91 96784 55815</div>
+                        </div>
+                        <div class="em-family-btns">
+                            <a href="tel:9678455815" class="em-fam-call" title="Call John"><i class="fas fa-phone"></i></a>
+                            <a href="sms:9678455815?body=JOHN, I NEED HELP! I am in an emergency. Please call me immediately or alert someone. Location: Chennai, Tamil Nadu. — URGENT 🚨" class="em-fam-sms" title="SMS John"><i class="fas fa-comment-sms"></i></a>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Footer -->
+                <div class="em-footer-bar">
+                    <div class="em-status-tag">
+                        <div class="em-dot" style="width:8px;height:8px;"></div>
+                        SYSTEM ACTIVE — BROADCASTING LOCATION
+                    </div>
+                    <button type="button" class="em-close-btn" data-bs-dismiss="modal">✕ CLOSE</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ STRESS PATTERN LOGGING SECTION ═══════════ -->
+    <section id="stressPatternSection" class="stress-pattern-section hidden">
+        <button class="btn-back" onclick="showHome()"><i class="fas fa-arrow-left"></i> Back to Home</button>
+
+        <div class="stress-hero">
+            <div class="stress-badge"><i class="fas fa-heartbeat"></i> MOD_06 | PHYSIOLOGICAL CROWDSOURCING</div>
+            <h1 class="stress-title">STRESS PATTERN <span class="magenta-text">LOGGING</span></h1>
+            <p class="stress-subtitle">
+                A journey stress analyzer that records heart rate data throughout a trip, detects stress spikes along the route,
+                and anonymously contributes spike locations to the community safety map as physiological danger signals —
+                crowdsourcing unsafe zones purely from body data.
+            </p>
+        </div>
+
+        <!-- BPM Simulator Panel -->
+        <div style="max-width:900px;margin:2rem auto;padding:0 1.5rem;">
+            <div class="bpm-simulator">
+                <div class="stress-card-title" style="justify-content:center;font-size:1.2rem;margin-bottom:1.5rem;">⚡ BPM SIMULATOR PANEL</div>
+                <div class="bpm-label">CURRENT HEART RATE</div>
+                <div class="bpm-display" id="bpmDisplay">72</div>
+                <div class="bpm-label">BPM</div>
+                <input type="range" class="bpm-slider" id="bpmSlider" min="40" max="200" value="72" oninput="updateBPM(this.value)">
+                <div style="display:flex;justify-content:space-between;color:#9ca3af;font-size:0.8rem;margin-top:-0.5rem;">
+                    <span>40 BPM</span><span>120 BPM</span><span>200 BPM</span>
+                </div>
+                <div class="bpm-controls">
+                    <button class="bpm-btn" onclick="setBPM(60)">REST (60)</button>
+                    <button class="bpm-btn" onclick="setBPM(85)">NORMAL (85)</button>
+                    <button class="bpm-btn" onclick="setBPM(110)">ELEVATED (110)</button>
+                    <button class="bpm-btn" onclick="setBPM(140)">SPIKE (140)</button>
+                    <button class="bpm-btn" onclick="setBPM(175)">DANGER (175)</button>
+                </div>
+                <div class="bpm-status-bar" id="bpmStatusBar" style="margin-top:1.5rem;">
+                    <span class="status-pill pill-normal">● NORMAL</span>
+                    <span class="status-pill pill-warning" style="opacity:0.3;">● ELEVATED</span>
+                    <span class="status-pill pill-spike" style="opacity:0.3;">● STRESS SPIKE</span>
+                </div>
+                <!-- Heartbeat SVG -->
+                <svg class="heartbeat-line" id="heartbeatSvg" viewBox="0 0 800 60" preserveAspectRatio="none">
+                    <polyline id="heartbeatLine" points="0,30 100,30 150,30 175,5 200,55 225,15 250,30 350,30 400,30 450,30 475,5 500,55 525,15 550,30 650,30 800,30"
+                        fill="none" stroke="#ff1493" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Trip Controls + Spike Log -->
+        <div class="stress-grid">
+            <div class="stress-card">
+                <div class="stress-card-title">🚗 TRIP RECORDER</div>
+                <div class="trip-controls">
+                    <button class="btn-trip btn-start-trip" id="startTripBtn" onclick="startTrip()">▶ START TRIP</button>
+                    <button class="btn-trip btn-stop-trip" id="stopTripBtn" onclick="stopTrip()" disabled style="opacity:0.4;">■ STOP TRIP</button>
+                </div>
+                <div class="trip-info">
+                    <div class="trip-stat"><div class="trip-stat-label">Duration</div><div class="trip-stat-value" id="tripDuration">00:00</div></div>
+                    <div class="trip-stat"><div class="trip-stat-label">Baseline BPM</div><div class="trip-stat-value" id="baselineBPM">—</div></div>
+                    <div class="trip-stat"><div class="trip-stat-label">Readings</div><div class="trip-stat-value" id="readingCount">0</div></div>
+                    <div class="trip-stat"><div class="trip-stat-label">Spikes</div><div class="trip-stat-value" id="spikeCount" style="color:#ff1493;">0</div></div>
+                </div>
+                <div style="margin-top:1.5rem;">
+                    <div style="font-size:0.8rem;color:#9ca3af;letter-spacing:1px;margin-bottom:0.5rem;">SPIKE DETECTION LOGIC</div>
+                    <div style="background:rgba(0,0,0,0.3);border:1px solid rgba(255,20,147,0.2);border-radius:8px;padding:1rem;font-size:0.8rem;color:#b0b0b0;line-height:1.6;font-family:monospace;">
+                        <span style="color:#ff1493;">function</span> <span style="color:#ff88ff;">detectStressSpike</span>(bpm, baseline) {<br>
+                        &nbsp;&nbsp;<span style="color:#ff1493;">const</span> SPIKE_MIN = <span style="color:#ffaa00;">110</span>;<br>
+                        &nbsp;&nbsp;<span style="color:#ff1493;">const</span> DEVIATION = <span style="color:#ffaa00;">20</span>;<br>
+                        &nbsp;&nbsp;<span style="color:#ff1493;">return</span> bpm &gt; SPIKE_MIN<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;&& bpm - baseline &gt;= DEVIATION;<br>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="stress-card">
+                <div class="stress-card-title">⚡ STRESS SPIKE LOG</div>
+                <div class="spike-log" id="spikeLog">
+                    <div class="spike-empty">No spikes recorded yet.<br>Start a trip and simulate elevated BPM to detect spikes.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Requirements Cards -->
+        <div style="max-width:1100px;margin:1rem auto;padding:0 1.5rem;text-align:center;">
+            <h2 style="font-family:'Orbitron',sans-serif;color:#ff1493;font-size:1.4rem;letter-spacing:2px;margin-bottom:0.5rem;">SPECIFIC REQUIREMENTS</h2>
+            <p style="color:#9ca3af;font-size:0.9rem;margin-bottom:1.5rem;">How this module fulfils the crowdsourcing protocol</p>
+        </div>
+        <div class="req-grid">
+            <div class="req-card">
+                <div class="req-icon">⏱️</div>
+                <div class="req-title">30-SECOND READINGS</div>
+                <div class="req-desc">Heart rate recorded every 30 seconds alongside GPS coordinates at that precise moment during an active trip.</div>
+            </div>
+            <div class="req-card">
+                <div class="req-icon">📍</div>
+                <div class="req-title">GPS COORDINATE LOGGING</div>
+                <div class="req-desc">Each reading is tagged with timestamp and location. Stress spikes include full metadata: BPM, baseline, deviation, and coordinates.</div>
+            </div>
+            <div class="req-card">
+                <div class="req-icon">🧮</div>
+                <div class="req-title">BASELINE CALIBRATION</div>
+                <div class="req-desc">Average BPM from the first 5 minutes of the journey establishes the personal baseline — used by the spike detection function.</div>
+            </div>
+            <div class="req-card">
+                <div class="req-icon">🌐</div>
+                <div class="req-title">ANONYMOUS CROWDSOURCING</div>
+                <div class="req-desc">Detected spike locations are anonymously contributed to the community safety map as physiological danger signals — unsafe zones from pure body data.</div>
+            </div>
+        </div>
+
+        <div style="text-align:center;padding:2rem 1rem 3rem;color:#9ca3af;font-size:0.85rem;border-top:1px solid rgba(255,20,147,0.2);margin-top:2rem;max-width:900px;margin-left:auto;margin-right:auto;">
+            ❤️ Stress Pattern Logging &amp; Physiological Crowdsourcing | BPM &gt; 110 &amp; ≥20 above baseline = Spike | Data anonymised before community upload
+        </div>
+    </section>
+
+
+    <script>
+
+    // ════════════════════════════════════════════
+    //  EMERGENCY
+    // ════════════════════════════════════════════
+    let userEmergencyCoords = null;
+    let userEmergencyAddress = 'Chennai, Tamil Nadu, India';
+
+    function openEmergency() {
+        const modal = new bootstrap.Modal(document.getElementById('emergencyModal'));
+        modal.show();
+        fetchUserLocationForEmergency();
+    }
+
+    function triggerSOS() {
+        // SOS: open emergency modal AND attempt to call 112
+        openEmergency();
+        // Show SOS overlay alert
+        const overlay = document.createElement('div');
+        overlay.id = 'sosOverlay';
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(180,0,0,0.92);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;animation:redBlink 0.6s ease-in-out infinite;';
+        overlay.innerHTML = `
+            <div style="font-family:'Orbitron',sans-serif;font-size:60px;color:#fff;text-shadow:0 0 40px #ff0000;animation:alertTextBlink 0.5s ease-in-out infinite;">🆘 SOS</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:22px;color:#ffcccc;margin:14px 0 6px;letter-spacing:3px;">EMERGENCY ACTIVATED</div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:13px;color:#ff9999;margin-bottom:22px;letter-spacing:2px;">TAP ANY NUMBER TO CALL IMMEDIATELY</div>
+            <div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;max-width:520px;margin-bottom:18px;">
+                <a href="tel:112"  style="background:#fff;color:#cc0000;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;box-shadow:0 0 20px rgba(255,255,255,0.4);min-width:130px;text-align:center;">📞 112<br><span style="font-size:10px;font-weight:400;">National SOS</span></a>
+                <a href="tel:100"  style="background:#cc2200;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff6644;min-width:130px;text-align:center;">🚔 100<br><span style="font-size:10px;font-weight:400;">Police</span></a>
+                <a href="tel:108"  style="background:#cc2200;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff6644;min-width:130px;text-align:center;">🚑 108<br><span style="font-size:10px;font-weight:400;">Ambulance</span></a>
+                <a href="tel:101"  style="background:#cc2200;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff6644;min-width:130px;text-align:center;">🚒 101<br><span style="font-size:10px;font-weight:400;">Fire</span></a>
+                <a href="tel:181"  style="background:#7a0050;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff69b4;min-width:130px;text-align:center;">👩 181<br><span style="font-size:10px;font-weight:400;">Women Helpline</span></a>
+                <a href="tel:1092" style="background:#7a0050;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff69b4;min-width:130px;text-align:center;">🆘 1092<br><span style="font-size:10px;font-weight:400;">TN Women</span></a>
+                <a href="tel:1078" style="background:#cc2200;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff6644;min-width:130px;text-align:center;">🏥 1078<br><span style="font-size:10px;font-weight:400;">Disaster Mgmt</span></a>
+            </div>
+            <button onclick="document.getElementById('sosOverlay').remove()" style="background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.4);color:#fff;padding:10px 32px;border-radius:50px;font-family:'Orbitron',sans-serif;font-size:13px;cursor:pointer;margin-top:4px;letter-spacing:2px;">✕ DISMISS</button>
+        `;
+        document.body.appendChild(overlay);
+        // Auto dismiss overlay after 8 seconds
+        setTimeout(() => { if (document.getElementById('sosOverlay')) document.getElementById('sosOverlay').remove(); }, 8000);
+    }
+
+    function fetchUserLocationForEmergency() {
+        if (!navigator.geolocation) {
+            document.getElementById('emLocationText').textContent = '📍 LOCATION UNAVAILABLE — RESPONDERS NOTIFIED';
+            setDefaultPoliceStation();
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            async (pos) => {
+                userEmergencyCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                // Reverse geocode
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${userEmergencyCoords.lat}&lon=${userEmergencyCoords.lng}&format=json`);
+                    const data = await res.json();
+                    const city = data.address.city || data.address.town || data.address.suburb || 'Your Location';
+                    const state = data.address.state || 'India';
+                    userEmergencyAddress = `${city}, ${state}`;
+                    document.getElementById('emLocationText').textContent = `📍 LOCATION BROADCASTING — ${userEmergencyAddress.toUpperCase()} | LAT: ${userEmergencyCoords.lat.toFixed(4)}, LNG: ${userEmergencyCoords.lng.toFixed(4)} | RESPONDERS NOTIFIED`;
+                } catch(e) {
+                    document.getElementById('emLocationText').textContent = `📍 LOCATION BROADCASTING — LAT: ${userEmergencyCoords.lat.toFixed(4)}, LNG: ${userEmergencyCoords.lng.toFixed(4)} | RESPONDERS NOTIFIED`;
+                }
+                // Find nearby police station via Overpass API
+                fetchNearbyPoliceStation(userEmergencyCoords.lat, userEmergencyCoords.lng);
+            },
+            (err) => {
+                document.getElementById('emLocationText').textContent = '📍 LOCATION ACCESS DENIED — DEFAULTING TO CHENNAI | RESPONDERS NOTIFIED';
+                setDefaultPoliceStation();
+            },
+            { timeout: 8000, maximumAge: 60000 }
+        );
+    }
+
+    async function fetchNearbyPoliceStation(lat, lng) {
+        document.getElementById('policeStationName').textContent = 'Searching nearby station...';
+        document.getElementById('policeStationAddr').innerHTML = '<span style="color:#ffaa44;">📡 Querying map database...</span>';
+        try {
+            const query = `[out:json][timeout:10];(node["amenity"="police"](around:3000,${lat},${lng});way["amenity"="police"](around:3000,${lat},${lng}););out center 5;`;
+            const res = await fetch(`https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`);
+            const data = await res.json();
+            if (data.elements && data.elements.length > 0) {
+                const station = data.elements[0];
+                const sLat = station.lat || station.center?.lat;
+                const sLng = station.lon || station.center?.lon;
+                const name = station.tags?.name || 'Nearest Police Station';
+                const addr = [station.tags?.['addr:street'], station.tags?.['addr:suburb'], station.tags?.['addr:city']].filter(Boolean).join(', ') || userEmergencyAddress;
+                const phone = station.tags?.phone || station.tags?.['contact:phone'] || '100';
+                const cleanPhone = phone.replace(/\D/g, '').replace(/^91/, '') || '100';
+                const dist = sLat && sLng ? (Math.round(Math.sqrt(Math.pow((lat-sLat)*111,2)+Math.pow((lng-sLng)*111*Math.cos(lat*Math.PI/180),2))*10)/10) : '?';
+                document.getElementById('policeStationName').textContent = name;
+                document.getElementById('policeStationAddr').innerHTML = `📍 ${addr} &nbsp;•&nbsp; ~${dist} km away &nbsp;•&nbsp; Active 24/7`;
+                document.getElementById('policeStationBtns').innerHTML = `
+                    <a href="tel:${cleanPhone}" class="em-btn-call" style="flex:1;min-width:120px;margin-bottom:0;">📞 CALL STATION</a>
+                    <a href="sms:${cleanPhone}?body=URGENT: I need immediate police help. My location: Lat ${lat.toFixed(4)}, Lng ${lng.toFixed(4)} — ${userEmergencyAddress}. Please dispatch now. Time: ${new Date().toLocaleString()}" class="em-btn-sms" style="flex:1;min-width:120px;">💬 MSG STATION</a>
+                    <a href="https://www.google.com/maps/search/police+station/@${lat},${lng},15z" target="_blank" class="em-btn-sms" style="flex:1;min-width:120px;color:#ffcc44;border-color:rgba(255,200,0,0.4);">🗺️ VIEW MAP</a>
+                `;
+            } else {
+                setDefaultPoliceStation();
+            }
+        } catch(e) {
+            setDefaultPoliceStation();
+        }
+    }
+
+    function setDefaultPoliceStation() {
+        document.getElementById('policeStationName').textContent = 'Chennai City Police — Control Room';
+        document.getElementById('policeStationAddr').innerHTML = '📍 Chennai, Tamil Nadu &nbsp;•&nbsp; Active 24/7';
+        document.getElementById('policeStationBtns').innerHTML = `
+            <a href="tel:1044" class="em-btn-call" style="flex:1;min-width:120px;margin-bottom:0;">📞 CALL 1044</a>
+            <a href="sms:100?body=URGENT: I need immediate police assistance in Chennai, Tamil Nadu. Please dispatch help immediately. Time: ${new Date().toLocaleString()}" class="em-btn-sms" style="flex:1;min-width:120px;">💬 SMS 100</a>
+        `;
+    }
+
+    function appendTimeToSMS(el) {
+        const base = el.getAttribute('href');
+        if (!base.includes('Time: ')) return;
+        el.setAttribute('href', base + new Date().toLocaleString());
+    }
+
+    // ════════════════════════════════════════════
+    //  SHARED DATA
+    // ════════════════════════════════════════════
+    const locationsData = {
+        india: {
+            name: 'India', state: 'Tamil Nadu', city: 'Chennai', coords: [13.0827, 80.2707],
+            popularPlaces: [
+                { name: 'Marina Beach', address: 'Chennai, Tamil Nadu', safety: 'Safe', icon: 'fa-umbrella-beach', description: 'One of the longest urban beaches in India. Well-maintained with police presence, good lighting, and high foot traffic during daytime.' },
+                { name: 'Fort St. George', address: 'Kolkata District, Chennai', safety: 'Safe', icon: 'fa-gopuram', description: 'Historic monument and museum area. Guarded premises with security personnel, regular maintenance, and established tourist routes.' },
+                { name: 'Kapaleeshwar Temple', address: 'Mylapore, Chennai', safety: 'Safe', icon: 'fa-gopuram', description: 'Ancient temple with religious significance. Well-managed by authorities, good lighting around premises, and regular visitor management.' },
+                { name: 'Broadway Market', address: 'Georgetown, Chennai', safety: 'Moderate', icon: 'fa-shop', description: 'Busy shopping district with crowded streets. Generally safe during business hours but can be chaotic. Caution recommended after dark.' },
+                { name: 'Egmore Railway Station Area', address: 'Egmore, Chennai', safety: 'Moderate', icon: 'fa-train', description: 'Central transportation hub with moderate crowd levels. Good police presence but crowded during peak hours.' },
+                { name: 'Saidapet Industrial Area', address: 'Saidapet, Chennai', safety: 'Unsafe', icon: 'fa-exclamation-circle', description: 'Industrial zone with minimal street lighting and limited pedestrian infrastructure. Avoid during late hours.' }
+            ]
+        }
+    };
+
+    const buddiesData = [
+        { id: 1, name: 'Priya Singh', initials: 'PS', location: 'Marina Beach, Chennai', lat: 13.0499, lng: 80.2824, distance: '0.8 km', status: 'online' },
+        { id: 2, name: 'Rajesh Kumar', initials: 'RK', location: 'Mylapore, Chennai', lat: 13.0341, lng: 80.2619, distance: '2.3 km', status: 'online' },
+        { id: 3, name: 'Ananya Patel', initials: 'AP', location: 'T. Nagar, Chennai', lat: 13.0299, lng: 80.2435, distance: '4.5 km', status: 'online' },
+        { id: 4, name: 'Vikram Sharma', initials: 'VS', location: 'Adyar, Chennai', lat: 13.0089, lng: 80.2458, distance: '6.2 km', status: 'online' }
+    ];
+
+    let userLocation = { lat: 13.0827, lng: 80.2707, name: 'You' };
+    let safetyMap, buddyMap, routeLeafletMap;
+    let buddyMarkers = {};
+    let notifications = [];
+    let currentChatBuddy = null;
+    let isTracking = false;
+
+    // ════════════════════════════════════════════
+    //  NAVIGATION
+    // ════════════════════════════════════════════
+    function setActiveNav(id) {
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        const el = document.getElementById(id);
+        if (el) el.classList.add('active');
+    }
+
+    function showHome() {
+        document.getElementById('homeSection').classList.remove('hidden');
+        document.getElementById('modulesSection').classList.remove('hidden');
+        document.getElementById('safetyMapSection').classList.add('hidden');
+        document.getElementById('buddyTrackingSection').classList.add('hidden');
+        document.getElementById('routePlannerSection').classList.add('hidden');
+        document.getElementById('stressPatternSection').classList.add('hidden');
+        setActiveNav('navHome');
+    }
+
+    function showSafetyMap() {
+        document.getElementById('homeSection').classList.add('hidden');
+        document.getElementById('modulesSection').classList.add('hidden');
+        document.getElementById('safetyMapSection').classList.remove('hidden');
+        document.getElementById('buddyTrackingSection').classList.add('hidden');
+        document.getElementById('routePlannerSection').classList.add('hidden');
+        document.getElementById('stressPatternSection').classList.add('hidden');
+        setActiveNav('navMap');
+        setTimeout(() => {
+            if (!safetyMap) { initializeSafetyMap(); populatePopularPlaces(); }
+        }, 100);
+    }
+
+    function showBuddyTracking() {
+        document.getElementById('homeSection').classList.add('hidden');
+        document.getElementById('modulesSection').classList.add('hidden');
+        document.getElementById('safetyMapSection').classList.add('hidden');
+        document.getElementById('buddyTrackingSection').classList.remove('hidden');
+        document.getElementById('routePlannerSection').classList.add('hidden');
+        document.getElementById('stressPatternSection').classList.add('hidden');
+        setActiveNav('navBuddy');
+        setTimeout(() => {
+            if (!buddyMap) { initializeBuddyMap(); populateBuddies(); }
+        }, 100);
+    }
+
+    function showRoutePlanner() {
+        document.getElementById('homeSection').classList.add('hidden');
+        document.getElementById('modulesSection').classList.add('hidden');
+        document.getElementById('safetyMapSection').classList.add('hidden');
+        document.getElementById('buddyTrackingSection').classList.add('hidden');
+        document.getElementById('routePlannerSection').classList.remove('hidden');
+        document.getElementById('stressPatternSection').classList.add('hidden');
+        setActiveNav('navRoute');
+        setTimeout(() => {
+            if (!routeLeafletMap) { initRouteMap(); }
+        }, 150);
+    }
+
+    function showStressPattern() {
+        document.getElementById('homeSection').classList.add('hidden');
+        document.getElementById('modulesSection').classList.add('hidden');
+        document.getElementById('safetyMapSection').classList.add('hidden');
+        document.getElementById('buddyTrackingSection').classList.add('hidden');
+        document.getElementById('routePlannerSection').classList.add('hidden');
+        document.getElementById('stressPatternSection').classList.remove('hidden');
+        setActiveNav('navStress');
+        window.scrollTo(0, 0);
+    }
+
+    // ════════════════════════════════════════════
+    //  STRESS PATTERN MODULE
+    // ════════════════════════════════════════════
+    let currentBPM = 72;
+    let tripActive = false;
+    let tripStartTime = null;
+    let tripTimer = null;
+    let readingTimer = null;
+    let tripReadings = [];
+    let spikeList = [];
+    let baselineBPM = null;
+    let readingCount = 0;
+    const SPIKE_MIN_BPM = 110;
+    const SPIKE_DEVIATION = 20;
+
+    // Separate callable spike detection function (not inlined)
+    function detectStressSpike(bpm, baseline) {
+        if (!baseline) return false;
+        return bpm > SPIKE_MIN_BPM && (bpm - baseline) >= SPIKE_DEVIATION;
+    }
+
+    function updateBPM(val) {
+        currentBPM = parseInt(val);
+        document.getElementById('bpmDisplay').textContent = currentBPM;
+        updateBPMDisplay();
+    }
+
+    function setBPM(val) {
+        currentBPM = val;
+        document.getElementById('bpmSlider').value = val;
+        document.getElementById('bpmDisplay').textContent = val;
+        updateBPMDisplay();
+    }
+
+    function updateBPMDisplay() {
+        const display = document.getElementById('bpmDisplay');
+        const statusBar = document.getElementById('bpmStatusBar');
+        const isSpike = baselineBPM && detectStressSpike(currentBPM, baselineBPM);
+        const isElevated = currentBPM >= 100;
+        if (isSpike) {
+            display.style.color = '#ff1493';
+            display.style.textShadow = '0 0 40px rgba(255,20,147,1)';
+            statusBar.innerHTML = '<span class="status-pill pill-normal" style="opacity:0.3;">● NORMAL</span><span class="status-pill pill-warning" style="opacity:0.3;">● ELEVATED</span><span class="status-pill pill-spike">⚡ STRESS SPIKE</span>';
+        } else if (isElevated) {
+            display.style.color = '#ffaa00';
+            display.style.textShadow = '0 0 30px rgba(255,170,0,0.8)';
+            statusBar.innerHTML = '<span class="status-pill pill-normal" style="opacity:0.3;">● NORMAL</span><span class="status-pill pill-warning">● ELEVATED</span><span class="status-pill pill-spike" style="opacity:0.3;">● STRESS SPIKE</span>';
+        } else {
+            display.style.color = '#ff1493';
+            display.style.textShadow = '0 0 30px rgba(255,20,147,0.8)';
+            statusBar.innerHTML = '<span class="status-pill pill-normal">● NORMAL</span><span class="status-pill pill-warning" style="opacity:0.3;">● ELEVATED</span><span class="status-pill pill-spike" style="opacity:0.3;">● STRESS SPIKE</span>';
+        }
+        // Animate heartbeat speed
+        const svg = document.getElementById('heartbeatLine');
+        if (svg) {
+            const speed = Math.max(0.2, 1.5 - (currentBPM / 200));
+            svg.style.animation = `none`;
+            svg.parentElement.style.opacity = tripActive ? '1' : '0.5';
+        }
+    }
+
+    function startTrip() {
+        tripActive = true;
+        tripStartTime = Date.now();
+        tripReadings = [];
+        spikeList = [];
+        baselineBPM = null;
+        readingCount = 0;
+        document.getElementById('startTripBtn').disabled = true;
+        document.getElementById('startTripBtn').style.opacity = '0.4';
+        document.getElementById('stopTripBtn').disabled = false;
+        document.getElementById('stopTripBtn').style.opacity = '1';
+        document.getElementById('spikeLog').innerHTML = '<div class="spike-empty">Monitoring... recording BPM every 30s.</div>';
+        document.getElementById('spikeCount').textContent = '0';
+        document.getElementById('readingCount').textContent = '0';
+        document.getElementById('baselineBPM').textContent = '—';
+
+        // Trip duration timer
+        tripTimer = setInterval(() => {
+            const elapsed = Math.floor((Date.now() - tripStartTime) / 1000);
+            const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const s = String(elapsed % 60).padStart(2, '0');
+            document.getElementById('tripDuration').textContent = `${m}:${s}`;
+        }, 1000);
+
+        // BPM reading every 5s (simulating 30s for demo speed)
+        readingTimer = setInterval(() => {
+            if (!tripActive) return;
+            readingCount++;
+            const elapsed = Math.floor((Date.now() - tripStartTime) / 1000);
+            const bpm = currentBPM + Math.floor((Math.random() - 0.5) * 6); // slight variation
+            tripReadings.push({ bpm, time: elapsed });
+
+            // Set baseline from first 5 "readings" (simulating 5 min = first 5 readings)
+            if (!baselineBPM && tripReadings.length >= 3) {
+                const slice = tripReadings.slice(0, Math.min(tripReadings.length, 5));
+                baselineBPM = Math.round(slice.reduce((s, r) => s + r.bpm, 0) / slice.length);
+                document.getElementById('baselineBPM').textContent = baselineBPM;
+            }
+
+            document.getElementById('readingCount').textContent = readingCount;
+
+            // Check for spike
+            if (baselineBPM && detectStressSpike(bpm, baselineBPM)) {
+                const lat = (13.0827 + (Math.random() - 0.5) * 0.05).toFixed(4);
+                const lng = (80.2707 + (Math.random() - 0.5) * 0.05).toFixed(4);
+                const deviation = bpm - baselineBPM;
+                spikeList.unshift({ bpm, baseline: baselineBPM, deviation, lat, lng, time: new Date().toLocaleTimeString() });
+                document.getElementById('spikeCount').textContent = spikeList.length;
+                renderSpikeLog();
+            }
+            updateBPMDisplay();
+        }, 5000);
+    }
+
+    function stopTrip() {
+        tripActive = false;
+        clearInterval(tripTimer);
+        clearInterval(readingTimer);
+        document.getElementById('startTripBtn').disabled = false;
+        document.getElementById('startTripBtn').style.opacity = '1';
+        document.getElementById('stopTripBtn').disabled = true;
+        document.getElementById('stopTripBtn').style.opacity = '0.4';
+        if (spikeList.length === 0) {
+            document.getElementById('spikeLog').innerHTML = '<div class="spike-empty">Trip ended. No stress spikes detected.</div>';
+        }
+    }
+
+    function renderSpikeLog() {
+        const log = document.getElementById('spikeLog');
+        if (spikeList.length === 0) {
+            log.innerHTML = '<div class="spike-empty">No spikes yet.</div>';
+            return;
+        }
+        log.innerHTML = spikeList.map(s => `
+            <div class="spike-entry">
+                <div class="spike-entry-head">
+                    <span class="spike-bpm">⚡ ${s.bpm} BPM</span>
+                    <span class="spike-time">${s.time}</span>
+                </div>
+                <div class="spike-detail">
+                    📍 ${s.lat}°N, ${s.lng}°E<br>
+                    Baseline: ${s.baseline} BPM | Deviation: +${s.deviation} BPM<br>
+                    <span style="color:#ff1493;font-size:0.78rem;">↑ Anonymously contributed to community map</span>
+                </div>
+            </div>
+        `).join('');
+    }
+
+
+    // ════════════════════════════════════════════
+    //  SAFETY MAP
+    // ════════════════════════════════════════════
+    function initializeSafetyMap() {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) return;
+        if (safetyMap) safetyMap.remove();
+        safetyMap = L.map('map').setView([13.0827, 80.2707], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(safetyMap);
+        L.circleMarker([13.0827, 80.2707], { radius: 8, fillColor: '#ff00ff', color: '#ff00ff', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(safetyMap).bindPopup('<strong>Chennai</strong><br>Current Location Focus');
+        const places = locationsData.india.popularPlaces;
+        places.forEach((place, index) => {
+            const offset = (index - 2) * 0.05;
+            const markerColor = place.safety === 'Safe' ? '#00ff00' : place.safety === 'Moderate' ? '#ff00ff' : '#ff5500';
+            L.circleMarker([13.0827 + offset, 80.2707 + offset], { radius: 6, fillColor: markerColor, color: markerColor, weight: 2, opacity: 1, fillOpacity: 0.7 }).addTo(safetyMap).bindPopup(`<strong>${place.name}</strong><br>Safety: ${place.safety}`);
+        });
+    }
+
+    function getCurrentLocation() {
+        const statusDiv = document.getElementById('locationStatus');
+        if (navigator.geolocation) {
+            statusDiv.innerHTML = '<div style="background:rgba(0,255,0,0.1);color:#00ff00;border:1px solid #00ff00;border-radius:6px;padding:10px;margin-top:10px;"><i class="fas fa-spinner fa-spin"></i> Accessing your location...</div>';
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    document.getElementById('coordinates').textContent = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    statusDiv.innerHTML = '<div style="background:rgba(0,255,0,0.1);color:#00ff00;border:1px solid #00ff00;border-radius:6px;padding:10px;margin-top:10px;"><i class="fas fa-check-circle"></i> Location accessed successfully!</div>';
+                    if (safetyMap) {
+                        safetyMap.setView([lat, lng], 14);
+                        L.circleMarker([lat, lng], { radius: 10, fillColor: '#00ff00', color: '#00ff00', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(safetyMap).bindPopup('<strong>Your Current Location</strong>');
+                    }
+                },
+                function() {
+                    statusDiv.innerHTML = '<div style="background:rgba(255,85,0,0.1);color:#ff5500;border:1px solid #ff5500;border-radius:6px;padding:10px;margin-top:10px;"><i class="fas fa-exclamation-circle"></i> Location access denied. Using default.</div>';
+                }
+            );
+        }
+    }
+
+    function populatePopularPlaces() {
+        const container = document.getElementById('popularPlacesContainer');
+        container.innerHTML = '';
+        locationsData.india.popularPlaces.forEach(place => {
+            const safetyClass = place.safety === 'Safe' ? 'badge-safe icon-safe' : place.safety === 'Moderate' ? 'badge-moderate icon-moderate' : 'badge-unsafe icon-unsafe';
+            const badgeClass = place.safety === 'Safe' ? 'badge-safe' : place.safety === 'Moderate' ? 'badge-moderate' : 'badge-unsafe';
+            const card = document.createElement('div');
+            card.className = 'location-card';
+            card.innerHTML = `
+                <div class="card-badge ${badgeClass}">${place.safety}</div>
+                <div class="location-icon ${safetyClass}"><i class="fas ${place.icon}"></i></div>
+                <h3 class="location-name">${place.name}</h3>
+                <p class="location-address"><i class="fas fa-map-pin"></i> ${place.address}</p>
+                <p class="location-description">${place.description}</p>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // ════════════════════════════════════════════
+    //  BUDDY TRACKING
+    // ════════════════════════════════════════════
+    function initializeBuddyMap() {
+        const mapContainer = document.getElementById('buddy-map');
+        if (!mapContainer) return;
+        if (buddyMap) buddyMap.remove();
+        buddyMap = L.map('buddy-map').setView([userLocation.lat, userLocation.lng], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(buddyMap);
+        L.circleMarker([userLocation.lat, userLocation.lng], { radius: 10, fillColor: '#ff00ff', color: '#ff00ff', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(buddyMap).bindPopup('<strong>Your Location</strong><br>Chennai');
+        buddiesData.forEach(buddy => {
+            const m = L.circleMarker([buddy.lat, buddy.lng], { radius: 8, fillColor: '#ff1493', color: '#ff1493', weight: 2, opacity: 1, fillOpacity: 0.7 }).addTo(buddyMap).bindPopup(`<strong>${buddy.name}</strong><br>${buddy.location}`);
+            buddyMarkers[buddy.id] = m;
+            L.polyline([[userLocation.lat, userLocation.lng], [buddy.lat, buddy.lng]], { color: '#ff00ff', weight: 2, opacity: 0.5, dashArray: '5, 5' }).addTo(buddyMap);
+        });
+    }
+
+    function calculateDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371;
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLng = (lng2 - lng1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+        return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))).toFixed(1);
+    }
+
+    function populateBuddies() {
+        const container = document.getElementById('buddiesContainer');
+        container.innerHTML = '';
+        buddiesData.forEach(buddy => {
+            const distance = calculateDistance(userLocation.lat, userLocation.lng, buddy.lat, buddy.lng);
+            const card = document.createElement('div');
+            card.className = 'buddy-card';
+            card.innerHTML = `
+                <div class="buddy-status"></div>
+                <div class="buddy-avatar">${buddy.initials}</div>
+                <div class="buddy-name">${buddy.name}</div>
+                <div class="buddy-distance"><i class="fas fa-location-dot"></i> ${distance} km away</div>
+                <div class="buddy-address"><i class="fas fa-map-pin"></i> ${buddy.location}</div>
+                <div class="buddy-actions">
+                    <button class="btn-buddy-action" onclick="viewBuddyRoute(${buddy.id})"><i class="fas fa-route"></i> View Route</button>
+                    <button class="btn-buddy-action" onclick="openChat(${buddy.id}, '${buddy.name}')"><i class="fas fa-comment"></i> Chat</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function startBuddyTracking() {
+        isTracking = true;
+        alert('Buddy Tracking Activated!');
+        setInterval(() => {
+            if (isTracking) {
+                buddiesData.forEach(buddy => {
+                    buddy.lat += (Math.random() - 0.5) * 0.001;
+                    buddy.lng += (Math.random() - 0.5) * 0.001;
+                    if (buddyMarkers[buddy.id]) buddyMarkers[buddy.id].setLatLng([buddy.lat, buddy.lng]);
+                });
+            }
+        }, 5000);
+    }
+
+    function viewBuddyRoute(buddyId) {
+        const buddy = buddiesData.find(b => b.id === buddyId);
+        if (buddy && buddyMap) { buddyMap.setView([buddy.lat, buddy.lng], 14); }
+    }
+
+    function openAddBuddyModal() { alert('Add Buddy feature: User would see a modal to add a new buddy'); }
+
+    // ════════════════════════════════════════════
+    //  NOTIFICATIONS & CHAT
+    // ════════════════════════════════════════════
+    function sendNotification(buddyId, message) {
+        const buddy = buddiesData.find(b => b.id === buddyId);
+        if (!buddy) return;
+        const notificationId = Date.now();
+        const notification = { id: notificationId, buddyId, buddyName: buddy.name, message, time: new Date().toLocaleTimeString() };
+        notifications.push(notification);
+        displayNotification(notification);
+        updateNotificationCount();
+    }
+
+    function displayNotification(notification) {
+        const container = document.getElementById('notificationContainer');
+        const div = document.createElement('div');
+        div.className = 'notification-toast';
+        div.onclick = () => { openChat(notification.buddyId, notification.buddyName); div.remove(); notifications = notifications.filter(n => n.id !== notification.id); updateNotificationCount(); };
+        div.innerHTML = `<div class="notification-header"><div class="notification-user"><i class="fas fa-user-circle"></i> ${notification.buddyName}</div><div class="notification-time">${notification.time}</div></div><div class="notification-message">${notification.message}</div>`;
+        container.appendChild(div);
+        setTimeout(() => { div.remove(); notifications = notifications.filter(n => n.id !== notification.id); updateNotificationCount(); }, 5000);
+    }
+
+    function updateNotificationCount() { document.getElementById('notificationCount').textContent = notifications.length; }
+
+    function toggleNotifications() { if (notifications.length > 0) alert(`You have ${notifications.length} new notifications!`); }
+
+    function openChat(buddyId, buddyName) {
+        currentChatBuddy = buddyId;
+        document.getElementById('chatUserName').textContent = buddyName;
+        document.getElementById('chatMessages').innerHTML = '';
+        document.getElementById('chatInput').value = '';
+        document.getElementById('chatBox').classList.add('active');
+        addMessageToChat('Hey! How are you doing?', false);
+        setTimeout(() => addMessageToChat("I'm doing great! Are you still on the same route?", true), 500);
+    }
+
+    function closeChatBox() { document.getElementById('chatBox').classList.remove('active'); currentChatBuddy = null; }
+
+    function addMessageToChat(message, isOwn) {
+        const div = document.getElementById('chatMessages');
+        const el = document.createElement('div');
+        el.className = `message ${isOwn ? 'own' : ''}`;
+        el.innerHTML = `<div><div class="message-bubble ${isOwn ? 'own' : 'other'}">${message}</div><div class="message-time">${new Date().toLocaleTimeString()}</div></div>`;
+        div.appendChild(el);
+        div.scrollTop = div.scrollHeight;
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (message && currentChatBuddy) {
+            addMessageToChat(message, true);
+            input.value = '';
+            setTimeout(() => {
+                const responses = ['That sounds great!', 'Where are you headed?', 'Stay safe!', 'Talk soon!', "Thanks for sharing the route!"];
+                addMessageToChat(responses[Math.floor(Math.random() * responses.length)], false);
+            }, 1000);
+        }
+    }
+
+    // ════════════════════════════════════════════
+    //  ROUTE PLANNER
+    // ════════════════════════════════════════════
+    const tamilNaduLocations = {
+        'Chennai': { lat: 13.0827, lng: 80.2707 }, 'Trichy': { lat: 10.7905, lng: 78.7047 },
+        'Madurai': { lat: 9.9252, lng: 78.1198 }, 'Coimbatore': { lat: 11.0081, lng: 76.9956 },
+        'Salem': { lat: 11.6643, lng: 78.1460 }, 'Erode': { lat: 11.3406, lng: 77.7172 },
+        'Tiruppur': { lat: 11.1088, lng: 77.3411 }, 'Vellore': { lat: 12.9689, lng: 79.1288 },
+        'Kanchipuram': { lat: 12.8342, lng: 79.7029 }, 'Cuddalore': { lat: 11.7504, lng: 79.7691 },
+        'Puducherry': { lat: 11.9416, lng: 79.8083 }, 'Tiruvannamalai': { lat: 12.2259, lng: 79.0761 },
+        'Villupuram': { lat: 12.9589, lng: 79.4969 }, 'Kanyakumari': { lat: 8.0883, lng: 77.5385 },
+        'Nagercoil': { lat: 8.1833, lng: 77.4167 }, 'Thoothukudi': { lat: 8.7642, lng: 78.1348 },
+        'Virudunagar': { lat: 9.5873, lng: 77.9554 }, 'Tirunelveli': { lat: 8.7139, lng: 77.7567 },
+        'Ramanathapuram': { lat: 9.3636, lng: 78.8318 }, 'Sivagangai': { lat: 9.8461, lng: 78.4808 },
+        'Karur': { lat: 10.9379, lng: 78.0779 }, 'Dindigul': { lat: 10.3673, lng: 77.9757 },
+        'Namakkal': { lat: 11.7265, lng: 78.1684 }, 'Perambalur': { lat: 11.4569, lng: 78.8857 },
+        'Ariyalur': { lat: 11.1484, lng: 79.0763 }, 'Kodaikanal': { lat: 10.2381, lng: 77.4892 },
+        'Ooty': { lat: 11.4062, lng: 76.6955 }, 'Coonoor': { lat: 11.3561, lng: 76.8116 },
+        'Mettupalayam': { lat: 11.3017, lng: 76.5750 }
+    };
+
+    const locationNames = Object.keys(tamilNaduLocations);
+    let routeCurrentFrom = '', routeCurrentTo = '';
+    let routeFromCoords = null, routeToCoords = null;
+    let routePolylines = [];
+    let routeStartMarker, routeEndMarker;
+
+    function initRouteMap() {
+        if (routeLeafletMap) return;
+        routeLeafletMap = L.map('route-map').setView([10.8505, 78.6348], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap contributors', maxZoom: 19 }).addTo(routeLeafletMap);
+    }
+
+    function routeCalcDistance(lat1, lng1, lat2, lng2) {
+        const R = 6371, dLat = (lat2-lat1)*Math.PI/180, dLng = (lng2-lng1)*Math.PI/180;
+        const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function generateMockRoutes(from, to, time) {
+        if (!routeFromCoords || !routeToCoords) return [];
+        const d = routeCalcDistance(routeFromCoords.lat, routeFromCoords.lng, routeToCoords.lat, routeToCoords.lng);
+        const t = Math.round(d / 60 * 60);
+        const tm = time === 'night' ? 1.3 : time === 'evening' ? 1.1 : 1;
+        return [
+            { name: '🟢 National Highway (Express)', distance: d.toFixed(1)+' km', duration: Math.round(t*tm)+' min', safety: 'high', safetyScore: 95-(time==='night'?15:time==='evening'?8:0), color: '#00ff88', description: 'Well-maintained NH, 24/7 patrolled' },
+            { name: '🟡 State Highway (Scenic)', distance: (d+3).toFixed(1)+' km', duration: Math.round(t*1.1*tm)+' min', safety: 'medium', safetyScore: 75-(time==='night'?20:time==='evening'?10:0), color: '#ffaa00', description: 'State highways with moderate traffic' },
+            { name: '🔴 Local Roads (Quiet)', distance: (d+6).toFixed(1)+' km', duration: Math.round(t*1.2*tm)+' min', safety: 'low', safetyScore: 55-(time==='night'?25:time==='evening'?12:0), color: '#ff0055', description: 'Local roads, minimal lighting' }
+        ];
+    }
+
+    function showRouteSuggestions(input, dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const val = input.value.toLowerCase();
+        if (val.length < 1) { dropdown.classList.remove('active'); return; }
+        const filtered = locationNames.filter(l => l.toLowerCase().includes(val));
+        if (!filtered.length) { dropdown.classList.remove('active'); return; }
+        dropdown.innerHTML = filtered.map(l => `<div class="route-suggestion-item">${l}</div>`).join('');
+        dropdown.classList.add('active');
+        dropdown.querySelectorAll('.route-suggestion-item').forEach(item => {
+            item.addEventListener('click', () => { input.value = item.textContent; dropdown.classList.remove('active'); });
+        });
+    }
+
+    function generateRoutePath(from, to, variation) {
+        const steps = 5;
+        const path = [[from.lat, from.lng]];
+        for (let i = 1; i < steps; i++) {
+            const t = i / steps;
+            const lat = from.lat + (to.lat - from.lat) * t;
+            const lng = from.lng + (to.lng - from.lng) * t;
+            const offset = (variation - 1) * 0.02;
+            path.push([lat + offset * Math.sin(i), lng + offset * Math.cos(i)]);
+        }
+        path.push([to.lat, to.lng]);
+        return path;
+    }
+
+    function highlightRouteOnMap(index) {
+        routePolylines.forEach((p, i) => p.setStyle({ opacity: i === index ? 1 : 0.3, weight: i === index ? 4 : 2 }));
+    }
+
+    function routeOpenGoogleMaps() {
+        if (routeCurrentFrom && routeCurrentTo) window.open(`https://www.google.com/maps/dir/${encodeURIComponent(routeCurrentFrom)}+Tamil+Nadu/${encodeURIComponent(routeCurrentTo)}+Tamil+Nadu`, '_blank');
+        else alert('Please suggest a route first');
+    }
+    function routeOpenAppleMaps() {
+        if (routeFromCoords && routeToCoords) window.open(`maps://maps.apple.com/?saddr=${routeFromCoords.lat},${routeFromCoords.lng}&daddr=${routeToCoords.lat},${routeToCoords.lng}`, '_blank');
+        else alert('Please suggest a route first');
+    }
+    function routeCopyURL() {
+        if (routeFromCoords && routeToCoords) {
+            const url = `https://www.openstreetmap.org/directions?engine=osrm_car&route=${routeFromCoords.lat},${routeFromCoords.lng};${routeToCoords.lat},${routeToCoords.lng}`;
+            navigator.clipboard.writeText(url).then(() => alert('✓ OpenStreetMap URL copied!')).catch(() => alert('Failed to copy URL'));
+        } else alert('Please suggest a route first');
+    }
+
+    // ════════════════════════════════════════════
+    //  DOM READY
+    // ════════════════════════════════════════════
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // Safety map search / filter
+        const searchInput = document.querySelector('.search-input');
+        const filterSelect = document.querySelector('.filter-select');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const term = this.value.toLowerCase();
+                document.querySelectorAll('.location-card').forEach(card => {
+                    const name = card.querySelector('.location-name').textContent.toLowerCase();
+                    const addr = card.querySelector('.location-address').textContent.toLowerCase();
+                    card.style.display = (name.includes(term) || addr.includes(term)) ? 'block' : 'none';
+                });
+            });
+        }
+        if (filterSelect) {
+            filterSelect.addEventListener('change', function() {
+                const val = this.value;
+                document.querySelectorAll('.location-card').forEach(card => {
+                    const badge = card.querySelector('.card-badge').textContent.trim();
+                    card.style.display = (val === 'All Safety Levels' || badge === val) ? 'block' : 'none';
+                });
+            });
+        }
+
+        // Chat enter key
+        const chatInput = document.getElementById('chatInput');
+        if (chatInput) chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+        // Buddy alerts simulation
+        setInterval(() => {
+            if (!document.getElementById('buddyTrackingSection').classList.contains('hidden')) {
+                const alerts = [
+                    { buddyId: 1, message: 'Alert: Priya has deviated from the planned route!' },
+                    { buddyId: 2, message: 'Rajesh is entering a moderate safety area' },
+                    { buddyId: 3, message: 'Ananya is approaching Marina Beach' },
+                    { buddyId: 4, message: "Vikram's speed has decreased significantly" }
+                ];
+                const a = alerts[Math.floor(Math.random() * alerts.length)];
+                sendNotification(a.buddyId, a.message);
+            }
+        }, 15000);
+
+        // Route planner inputs
+        const fromInput = document.getElementById('from-location');
+        const toInput = document.getElementById('to-location');
+        if (fromInput) fromInput.addEventListener('input', () => showRouteSuggestions(fromInput, 'from-suggestions'));
+        if (toInput) toInput.addEventListener('input', () => showRouteSuggestions(toInput, 'to-suggestions'));
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', e => {
+            if (!e.target.classList.contains('route-location-input')) {
+                document.querySelectorAll('.route-suggestions-dropdown').forEach(d => d.classList.remove('active'));
+            }
+        });
+
+        // Suggest button
+        document.getElementById('suggest-btn').addEventListener('click', () => {
+            const from = document.getElementById('from-location').value;
+            const to = document.getElementById('to-location').value;
+            const time = document.getElementById('travel-time').value;
+            const errBox = document.getElementById('error-message');
+            const resultsSection = document.getElementById('route-results-section');
+
+            if (!from || !to || !time) {
+                errBox.textContent = '⚠️ Please fill in all fields (From, To, and Travel Time)';
+                errBox.style.display = 'block';
+                resultsSection.style.display = 'none';
+                return;
+            }
+            if (!tamilNaduLocations[from] || !tamilNaduLocations[to]) {
+                errBox.textContent = '⚠️ Please select valid Tamil Nadu cities from the suggestions';
+                errBox.style.display = 'block';
+                resultsSection.style.display = 'none';
+                return;
+            }
+            if (from === to) {
+                errBox.textContent = '⚠️ "From" and "To" locations must be different';
+                errBox.style.display = 'block';
+                resultsSection.style.display = 'none';
+                return;
+            }
+            errBox.style.display = 'none';
+
+            routeFromCoords = tamilNaduLocations[from];
+            routeToCoords = tamilNaduLocations[to];
+            routeCurrentFrom = from;
+            routeCurrentTo = to;
+
+            document.getElementById('result-from').textContent = from;
+            document.getElementById('result-to').textContent = to;
+            document.getElementById('result-time').textContent = time.charAt(0).toUpperCase() + time.slice(1);
+
+            const routes = generateMockRoutes(from, to, time);
+            const avgSafety = Math.round(routes.reduce((s,r) => s+r.safetyScore, 0) / routes.length);
+            document.getElementById('result-safety').textContent = avgSafety + '/100';
+
+            const routesContainer = document.getElementById('routes-container');
+            routesContainer.innerHTML = routes.map((route, index) => `
+                <div class="route-option-card ${index===0?'active':''}" data-route-index="${index}">
+                    <div class="route-option-title">
+                        <span class="route-option-name">${route.name}</span>
+                        <span class="route-safety-badge safety-${route.safety}">${route.safetyScore}/100</span>
+                    </div>
+                    <div class="route-option-info"><span>📏 Distance:</span><span>${route.distance}</span></div>
+                    <div class="route-option-info"><span>⏱️ Duration:</span><span>${route.duration}</span></div>
+                    <div class="route-option-info"><span>🔒 Safety:</span><span>${route.description}</span></div>
+                </div>
+            `).join('');
+
+            resultsSection.style.display = 'grid';
+
+            // Update map
+            if (routeLeafletMap) {
+                if (routeStartMarker) routeLeafletMap.removeLayer(routeStartMarker);
+                if (routeEndMarker) routeLeafletMap.removeLayer(routeEndMarker);
+                routePolylines.forEach(p => routeLeafletMap.removeLayer(p));
+                routePolylines = [];
+
+                routeStartMarker = L.circleMarker([routeFromCoords.lat, routeFromCoords.lng], { radius: 10, fillColor: '#ff1493', color: '#ff69b4', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(routeLeafletMap).bindPopup(`<strong style="color:#ff1493;">📍 Start: ${from}</strong>`);
+                routeEndMarker = L.circleMarker([routeToCoords.lat, routeToCoords.lng], { radius: 10, fillColor: '#ff69b4', color: '#ff1493', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(routeLeafletMap).bindPopup(`<strong style="color:#ff1493;">🎯 End: ${to}</strong>`);
+
+                const colors = ['#00ff88', '#ffaa00', '#ff0055'];
+                [0,1,2].forEach(i => {
+                    const path = generateRoutePath(routeFromCoords, routeToCoords, i);
+                    const poly = L.polyline(path, { color: colors[i], weight: i===0?4:2, opacity: i===0?1:0.4, dashArray: i===0?'':'5, 5' }).addTo(routeLeafletMap);
+                    routePolylines.push(poly);
+                });
+
+                routeLeafletMap.fitBounds([[routeFromCoords.lat, routeFromCoords.lng],[routeToCoords.lat, routeToCoords.lng]], { padding: [50,50] });
+                routeStartMarker.openPopup();
+            }
+
+            // Route card click handlers
+            document.querySelectorAll('.route-option-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    document.querySelectorAll('.route-option-card').forEach(c => c.classList.remove('active'));
+                    card.classList.add('active');
+                    highlightRouteOnMap(parseInt(card.getAttribute('data-route-index')));
+                });
+            });
+        });
+
+        // Close results
+        document.getElementById('close-route-results').addEventListener('click', () => {
+            document.getElementById('route-results-section').style.display = 'none';
+            document.getElementById('from-location').value = '';
+            document.getElementById('to-location').value = '';
+            document.getElementById('travel-time').value = '';
+            if (routeLeafletMap) {
+                if (routeStartMarker) routeLeafletMap.removeLayer(routeStartMarker);
+                if (routeEndMarker) routeLeafletMap.removeLayer(routeEndMarker);
+                routePolylines.forEach(p => routeLeafletMap.removeLayer(p));
+                routePolylines = [];
+                routeLeafletMap.setView([10.8505, 78.6348], 7);
+            }
+        });
+    });
+    </script>
+</body>
+</html>
