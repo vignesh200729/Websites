@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Student Toolkit — Everything you need, in one place</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+<style>
+/* ============================================================
+   ROOT VARIABLES / THEME TOKENS
+   ============================================================ */
+:root{
+  --bg: #0A0E1F;
+  --bg-2: #0F1430;
+  --surface: rgba(255,255,255,0.05);
+  --surface-solid: #131a35;
+  --surface-border: rgba(255,255,255,0.09);
+  --text: #EDEFF9;
+  --text-dim: #9BA1C4;
+  --primary: #6C5CE7;
+  --primary-2: #8B7CF6;
+  --mint: #00D9C0;
+  --pink: #FF6B9D;
+  --amber: #FFB84C;
+  --danger: #FF5C7A;
+  --success: #2FE3A6;
+  --radius-lg: 26px;
+  --radius-md: 18px;
+  --radius-sm: 12px;
+  --shadow-soft: 0 20px 60px rgba(0,0,0,0.35);
+  --ease: cubic-bezier(.22,1,.36,1);
+}
+
+[data-theme="light"]{
+  --bg: #F3F4FB;
+  --bg-2: #EAEBFB;
+  --surface: rgba(255,255,255,0.65);
+  --surface-solid: #ffffff;
+  --surface-border: rgba(20,20,50,0.08);
+  --text: #171A33;
+  --text-dim: #5B6089;
+  --shadow-soft: 0 20px 50px rgba(60,60,120,0.12);
+}
+
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0; }
+html{ scroll-behavior:smooth; }
+body{
+  font-family:'Poppins',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  overflow-x:hidden;
+  transition:background .4s var(--ease), color .4s var(--ease);
+  min-height:100vh;
+}
+
+::selection{ background:var(--primary); color:#fff; }
+
+a{ text-decoration:none; color:inherit; }
+button{ font-family:inherit; border:none; cursor:pointer; background:none; color:inherit; }
+input, textarea{ font-family:inherit; }
+
+/* Scrollbar */
+::-webkit-scrollbar{ width:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:linear-gradient(var(--primary),var(--mint)); border-radius:10px; }
+
+.container{
+  width:100%;
+  max-width:1240px;
+  margin:0 auto;
+  padding:0 28px;
+}
+
+/* ============================================================
+   LOADER
+   ============================================================ */
+#loader{
+  position:fixed; inset:0; z-index:9999;
+  background:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  transition:opacity .6s var(--ease), visibility .6s var(--ease);
+}
+#loader.hide{ opacity:0; visibility:hidden; }
+.loader-ring{
+  width:64px; height:64px; border-radius:50%;
+  border:3px solid rgba(255,255,255,0.08);
+  border-top-color:var(--primary);
+  border-right-color:var(--mint);
+  animation:spin 0.9s linear infinite;
+}
+.loader-box{ display:flex; flex-direction:column; align-items:center; gap:18px; }
+.loader-box span{ font-size:13px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+
+/* ============================================================
+   BACKGROUND MESH / BLOBS (shared)
+   ============================================================ */
+.mesh-bg{
+  position:fixed; inset:0; z-index:-2; overflow:hidden;
+  background:var(--bg);
+}
+.blob{
+  position:absolute; border-radius:50%;
+  filter:blur(90px); opacity:.55;
+  animation:float 18s ease-in-out infinite;
+}
+.blob1{ width:520px; height:520px; background:var(--primary); top:-160px; left:-120px; animation-duration:22s; }
+.blob2{ width:460px; height:460px; background:var(--mint); top:20%; right:-160px; animation-duration:26s; animation-delay:-4s; }
+.blob3{ width:400px; height:400px; background:var(--pink); bottom:-140px; left:30%; animation-duration:20s; animation-delay:-9s; }
+[data-theme="light"] .blob{ opacity:.28; }
+@keyframes float{
+  0%,100%{ transform:translate(0,0) scale(1); }
+  33%{ transform:translate(40px,-50px) scale(1.08); }
+  66%{ transform:translate(-30px,30px) scale(0.94); }
+}
+.grain{
+  position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background-image:radial-gradient(rgba(255,255,255,0.035) 1px, transparent 1px);
+  background-size:3px 3px;
+}
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
+.navbar{
+  position:fixed; top:0; left:0; right:0; z-index:1000;
+  padding:18px 0;
+  transition:all .35s var(--ease);
+}
+.navbar.scrolled{
+  padding:12px 0;
+  background:var(--surface);
+  backdrop-filter:blur(20px) saturate(160%);
+  -webkit-backdrop-filter:blur(20px) saturate(160%);
+  border-bottom:1px solid var(--surface-border);
+}
+.nav-inner{
+  display:flex; align-items:center; justify-content:space-between;
+}
+.logo{
+  display:flex; align-items:center; gap:10px;
+  font-weight:800; font-size:19px; letter-spacing:-.02em;
+}
+.logo-mark{
+  width:38px; height:38px; border-radius:11px;
+  background:linear-gradient(135deg,var(--primary),var(--mint));
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-size:16px;
+  box-shadow:0 8px 20px rgba(108,92,231,0.45);
+}
+.nav-links{
+  display:flex; align-items:center; gap:6px;
+  list-style:none;
+  background:var(--surface);
+  border:1px solid var(--surface-border);
+  padding:6px; border-radius:100px;
+  backdrop-filter:blur(20px);
+}
+.nav-links a{
+  padding:9px 20px; border-radius:100px;
+  font-size:14.5px; font-weight:500; color:var(--text-dim);
+  transition:all .3s var(--ease);
+  display:inline-block;
+}
+.nav-links a:hover{ color:var(--text); background:rgba(255,255,255,0.06); }
+.nav-actions{ display:flex; align-items:center; gap:12px; }
+.theme-toggle{
+  width:44px; height:44px; border-radius:50%;
+  background:var(--surface); border:1px solid var(--surface-border);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; transition:all .3s var(--ease);
+}
+.theme-toggle:hover{ transform:rotate(20deg) scale(1.08); border-color:var(--primary); }
+.nav-cta{
+  padding:10px 22px; border-radius:100px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff; font-weight:600; font-size:14px;
+  box-shadow:0 10px 25px rgba(108,92,231,.4);
+  transition:transform .3s var(--ease);
+}
+.nav-cta:hover{ transform:translateY(-2px); }
+.nav-burger{ display:none; width:44px; height:44px; border-radius:50%; background:var(--surface); border:1px solid var(--surface-border); align-items:center; justify-content:center; font-size:18px;}
+
+/* ============================================================
+   HERO
+   ============================================================ */
+.hero{
+  min-height:100vh;
+  display:flex; align-items:center; justify-content:center;
+  position:relative;
+  padding:150px 0 100px;
+  text-align:center;
+}
+.hero-inner{ max-width:840px; margin:0 auto; position:relative; z-index:2;}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:9px;
+  padding:8px 18px; border-radius:100px;
+  background:var(--surface); border:1px solid var(--surface-border);
+  font-size:13px; font-weight:500; color:var(--text-dim);
+  backdrop-filter:blur(10px);
+  margin-bottom:28px;
+  animation:fadeUp .8s var(--ease) both;
+}
+.eyebrow .dot{ width:7px; height:7px; border-radius:50%; background:var(--mint); box-shadow:0 0 12px var(--mint); animation:pulse 2s infinite; }
+@keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.4;} }
+
+.hero h1{
+  font-size:clamp(46px,8vw,96px);
+  font-weight:800; line-height:1.02; letter-spacing:-0.03em;
+  margin-bottom:22px;
+  animation:fadeUp .9s .1s var(--ease) both;
+}
+.hero h1 .grad{
+  background:linear-gradient(120deg,var(--primary) 10%,var(--mint) 50%,var(--pink) 90%);
+  background-size:200% auto;
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  animation:shine 6s linear infinite;
+}
+@keyframes shine{ to{ background-position:200% center; } }
+
+.hero p.sub{
+  font-size:clamp(16px,2.2vw,20px);
+  color:var(--text-dim); max-width:560px; margin:0 auto 40px;
+  font-weight:400; line-height:1.6;
+  animation:fadeUp .9s .2s var(--ease) both;
+}
+.hero-cta-row{
+  display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:60px;
+  animation:fadeUp .9s .3s var(--ease) both;
+}
+.btn{
+  position:relative; overflow:hidden;
+  padding:15px 32px; border-radius:100px;
+  font-weight:600; font-size:15px;
+  display:inline-flex; align-items:center; gap:10px;
+  transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+}
+.btn-primary{
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff; box-shadow:0 14px 34px rgba(108,92,231,.45);
+}
+.btn-primary:hover{ transform:translateY(-3px); box-shadow:0 18px 40px rgba(108,92,231,.55); }
+.btn-ghost{
+  background:var(--surface); border:1px solid var(--surface-border); color:var(--text);
+  backdrop-filter:blur(10px);
+}
+.btn-ghost:hover{ transform:translateY(-3px); border-color:var(--primary); }
+
+.ripple{
+  position:absolute; border-radius:50%;
+  background:rgba(255,255,255,0.5);
+  transform:scale(0); animation:rippleAnim .6s linear;
+  pointer-events:none;
+}
+@keyframes rippleAnim{ to{ transform:scale(3); opacity:0; } }
+
+/* Greeting / live clock widget */
+.hero-widget{
+  animation:fadeUp .9s .4s var(--ease) both;
+  display:inline-flex; align-items:center; gap:18px;
+  padding:16px 26px; border-radius:100px;
+  background:var(--surface); border:1px solid var(--surface-border);
+  backdrop-filter:blur(20px);
+  font-size:14px; color:var(--text-dim);
+  flex-wrap:wrap; justify-content:center;
+}
+.hero-widget strong{ color:var(--text); font-weight:600; }
+.hero-widget .sep{ width:1px; height:16px; background:var(--surface-border); }
+
+/* Stats row */
+.stats-row{
+  display:flex; justify-content:center; gap:60px; flex-wrap:wrap;
+  margin-top:70px;
+  animation:fadeUp .9s .5s var(--ease) both;
+}
+.stat{ text-align:center; }
+.stat .num{
+  font-size:38px; font-weight:800; letter-spacing:-.02em;
+  background:linear-gradient(120deg,var(--primary),var(--mint));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.stat .label{ font-size:13px; color:var(--text-dim); margin-top:4px; letter-spacing:.02em; }
+
+@keyframes fadeUp{
+  from{ opacity:0; transform:translateY(28px); }
+  to{ opacity:1; transform:translateY(0); }
+}
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section{ padding:110px 0; position:relative; }
+.section-head{ text-align:center; max-width:640px; margin:0 auto 64px; }
+.section-head .eyebrow{ margin-bottom:18px; }
+.section-head h2{
+  font-size:clamp(32px,5vw,50px); font-weight:800; letter-spacing:-.03em; margin-bottom:16px;
+}
+.section-head p{ color:var(--text-dim); font-size:16px; line-height:1.7; }
+
+.reveal{ opacity:0; transform:translateY(40px); transition:all .8s var(--ease); }
+.reveal.in{ opacity:1; transform:translateY(0); }
+
+/* ============================================================
+   TOOLS GRID
+   ============================================================ */
+.tools-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(340px,1fr));
+  gap:26px;
+}
+.tool-card{
+  background:var(--surface);
+  border:1px solid var(--surface-border);
+  border-radius:var(--radius-lg);
+  padding:32px;
+  backdrop-filter:blur(20px);
+  position:relative; overflow:hidden;
+  transition:transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease);
+}
+.tool-card::before{
+  content:''; position:absolute; inset:0; border-radius:inherit; padding:1px;
+  background:linear-gradient(135deg,transparent,transparent);
+  opacity:0; transition:opacity .4s var(--ease);
+  pointer-events:none;
+}
+.tool-card:hover{
+  transform:translateY(-8px);
+  box-shadow:var(--shadow-soft);
+  border-color:rgba(108,92,231,0.4);
+}
+.tool-icon{
+  width:52px; height:52px; border-radius:15px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:21px; color:#fff; margin-bottom:22px;
+  box-shadow:0 10px 24px rgba(0,0,0,.25);
+}
+.icon-1{ background:linear-gradient(135deg,#6C5CE7,#8B7CF6); }
+.icon-2{ background:linear-gradient(135deg,#00D9C0,#2FE3A6); }
+.icon-3{ background:linear-gradient(135deg,#FF6B9D,#FF8FB3); }
+.icon-4{ background:linear-gradient(135deg,#FFB84C,#FFD08A); }
+.icon-5{ background:linear-gradient(135deg,#6C5CE7,#FF6B9D); }
+.icon-6{ background:linear-gradient(135deg,#00D9C0,#6C5CE7); }
+
+.tool-card h3{ font-size:21px; font-weight:700; margin-bottom:8px; letter-spacing:-.01em; }
+.tool-card > p.desc{ color:var(--text-dim); font-size:14px; margin-bottom:24px; line-height:1.6; }
+
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:12.5px; color:var(--text-dim); margin-bottom:7px; font-weight:500; letter-spacing:.02em; text-transform:uppercase; }
+.field input, .field select, .field textarea{
+  width:100%; padding:12px 15px; border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.04);
+  border:1px solid var(--surface-border);
+  color:var(--text); font-size:14.5px;
+  transition:all .3s var(--ease);
+}
+[data-theme="light"] .field input, [data-theme="light"] .field select, [data-theme="light"] .field textarea{
+  background:rgba(20,20,60,0.03);
+}
+.field input:focus, .field select:focus, .field textarea:focus{
+  outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,92,231,.18);
+}
+.field select{ appearance:none; cursor:pointer; }
+
+.row-flex{ display:flex; gap:10px; }
+.row-flex .field{ flex:1; }
+
+.btn-block{
+  width:100%; padding:13px; border-radius:var(--radius-sm);
+  background:linear-gradient(135deg,var(--primary),var(--primary-2));
+  color:#fff; font-weight:600; font-size:14.5px;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  position:relative; overflow:hidden;
+  transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+  margin-top:6px;
+}
+.btn-block:hover{ transform:translateY(-2px); box-shadow:0 12px 28px rgba(108,92,231,.4); }
+.btn-block.outline{
+  background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); color:var(--text);
+  box-shadow:none;
+}
+.btn-block.outline:hover{ border-color:var(--primary); box-shadow:none; }
+
+/* result boxes */
+.result-box{
+  margin-top:18px; padding:18px; border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.03); border:1px solid var(--surface-border);
+  text-align:center; display:none;
+}
+.result-box.show{ display:block; animation:popIn .5s var(--ease) both; }
+@keyframes popIn{ from{ opacity:0; transform:scale(.9); } to{ opacity:1; transform:scale(1); } }
+.result-box .big{ font-size:34px; font-weight:800; }
+.result-box .tag{ font-size:12px; color:var(--text-dim); margin-top:4px; letter-spacing:.03em; text-transform:uppercase; }
+.result-box .hint{ font-size:13px; margin-top:10px; color:var(--text-dim); }
+
+.grade-badge{
+  display:inline-block; padding:5px 14px; border-radius:100px; font-size:13px; font-weight:700; margin-top:6px;
+}
+.badge-green{ background:rgba(47,227,166,0.15); color:var(--success); }
+.badge-orange{ background:rgba(255,184,76,0.15); color:var(--amber); }
+.badge-red{ background:rgba(255,92,122,0.15); color:var(--danger); }
+
+/* Grades repeater */
+.grade-rows{ display:flex; flex-direction:column; gap:10px; margin-bottom:12px; max-height:210px; overflow-y:auto; padding-right:4px;}
+.grade-row{ display:flex; gap:8px; align-items:center; }
+.grade-row select, .grade-row input{ padding:10px 12px; font-size:13.5px; border-radius:10px; background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); color:var(--text);}
+.grade-row select{ flex:1.3; }
+.grade-row input{ flex:1; }
+.grade-row .rm{
+  width:34px; height:34px; flex-shrink:0; border-radius:10px;
+  background:rgba(255,92,122,0.12); color:var(--danger); font-size:13px;
+  display:flex; align-items:center; justify-content:center;
+  transition:all .25s var(--ease);
+}
+.grade-row .rm:hover{ background:rgba(255,92,122,0.25); }
+.add-row-btn{
+  width:100%; padding:11px; border-radius:10px; border:1.5px dashed var(--surface-border);
+  color:var(--text-dim); font-size:13.5px; font-weight:500;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:all .3s var(--ease); margin-bottom:14px;
+}
+.add-row-btn:hover{ border-color:var(--primary); color:var(--primary); }
+
+/* attendance meter */
+.meter{ height:10px; border-radius:100px; background:rgba(255,255,255,0.06); overflow:hidden; margin-top:14px;}
+.meter-fill{ height:100%; border-radius:100px; width:0%; transition:width 1s var(--ease), background 1s var(--ease); }
+
+/* Pomodoro */
+.pomo-wrap{ display:flex; flex-direction:column; align-items:center; }
+.pomo-ring-wrap{ position:relative; width:200px; height:200px; margin:6px auto 22px; }
+.pomo-ring-wrap svg{ transform:rotate(-90deg); width:200px; height:200px; }
+.pomo-ring-bg{ fill:none; stroke:rgba(255,255,255,0.07); stroke-width:10; }
+.pomo-ring-fg{ fill:none; stroke:url(#pomoGrad); stroke-width:10; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
+.pomo-time{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.pomo-time .t{ font-size:38px; font-weight:800; letter-spacing:-.02em; }
+.pomo-time .mode{ font-size:11px; color:var(--text-dim); letter-spacing:.15em; text-transform:uppercase; margin-top:4px; }
+.pomo-controls{ display:flex; gap:10px; width:100%; }
+.pomo-controls button{
+  flex:1; padding:12px; border-radius:12px; font-weight:600; font-size:13.5px;
+  background:rgba(255,255,255,0.05); border:1px solid var(--surface-border);
+  display:flex; align-items:center; justify-content:center; gap:7px;
+  transition:all .3s var(--ease);
+}
+.pomo-controls button:hover{ transform:translateY(-2px); border-color:var(--primary); }
+.pomo-controls .start{ background:linear-gradient(135deg,var(--primary),var(--primary-2)); border:none; color:#fff; }
+
+/* Todo */
+.todo-input-row{ display:flex; gap:8px; margin-bottom:16px; }
+.todo-input-row input{ flex:1; }
+.todo-add-btn{
+  width:46px; height:46px; flex-shrink:0; border-radius:12px;
+  background:linear-gradient(135deg,var(--primary),var(--primary-2)); color:#fff;
+  display:flex; align-items:center; justify-content:center; font-size:16px;
+  transition:transform .3s var(--ease);
+}
+.todo-add-btn:hover{ transform:scale(1.08) rotate(90deg); }
+.todo-list{ display:flex; flex-direction:column; gap:8px; max-height:230px; overflow-y:auto; padding-right:4px; }
+.todo-item{
+  display:flex; align-items:center; gap:10px;
+  padding:11px 13px; border-radius:12px;
+  background:rgba(255,255,255,0.03); border:1px solid var(--surface-border);
+  animation:popIn .35s var(--ease) both;
+}
+.todo-check{
+  width:20px; height:20px; border-radius:7px; border:1.7px solid var(--text-dim);
+  flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px;
+  transition:all .25s var(--ease); cursor:pointer;
+}
+.todo-check.done{ background:var(--success); border-color:var(--success); color:#0A0E1F; }
+.todo-item span{ flex:1; font-size:14px; word-break:break-word; }
+.todo-item.done span{ text-decoration:line-through; color:var(--text-dim); }
+.todo-del{ color:var(--danger); opacity:.6; font-size:14px; transition:opacity .2s; flex-shrink:0;}
+.todo-del:hover{ opacity:1; }
+.todo-empty{ text-align:center; color:var(--text-dim); font-size:13.5px; padding:20px 0; }
+.todo-stats{ display:flex; justify-content:space-between; font-size:12.5px; color:var(--text-dim); margin-top:14px; }
+
+/* Motivation */
+.quote-box{
+  min-height:130px; display:flex; align-items:center; justify-content:center; text-align:center;
+  padding:10px 6px; margin-bottom:18px;
+}
+.quote-box p{ font-size:16.5px; font-weight:500; line-height:1.6; transition:opacity .4s ease; }
+.quote-box p.fade{ opacity:0; }
+.quote-author{ display:block; font-size:12.5px; color:var(--text-dim); margin-top:12px; font-weight:400; }
+
+/* Notes */
+.notes-area{
+  width:100%; min-height:170px; resize:vertical; padding:14px 16px; border-radius:var(--radius-sm);
+  background:rgba(255,255,255,0.04); border:1px solid var(--surface-border); color:var(--text);
+  font-size:14px; line-height:1.6;
+}
+.notes-area:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(108,92,231,.18); }
+.notes-status{ font-size:12px; color:var(--text-dim); margin-top:10px; display:flex; align-items:center; gap:6px; }
+.notes-status i{ color:var(--success); }
+
+/* ============================================================
+   ABOUT SECTION
+   ============================================================ */
+.about-grid{
+  display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center;
+}
+.about-card{
+  background:var(--surface); border:1px solid var(--surface-border); border-radius:var(--radius-lg);
+  padding:44px; backdrop-filter:blur(20px);
+}
+.about-card h2{ font-size:clamp(28px,4vw,40px); font-weight:800; margin-bottom:18px; letter-spacing:-.02em; }
+.about-card p{ color:var(--text-dim); line-height:1.8; font-size:15.5px; margin-bottom:16px; }
+.about-list{ list-style:none; display:flex; flex-direction:column; gap:14px; margin-top:22px; }
+.about-list li{ display:flex; align-items:center; gap:12px; font-size:14.5px; }
+.about-list i{
+  width:30px; height:30px; border-radius:9px; background:rgba(108,92,231,.15); color:var(--primary);
+  display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;
+}
+.about-visual{
+  display:grid; grid-template-columns:1fr 1fr; gap:18px;
+}
+.about-tile{
+  aspect-ratio:1; border-radius:var(--radius-md);
+  background:var(--surface); border:1px solid var(--surface-border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  backdrop-filter:blur(20px); transition:transform .4s var(--ease);
+}
+.about-tile:hover{ transform:translateY(-6px); }
+.about-tile i{ font-size:28px; background:linear-gradient(135deg,var(--primary),var(--mint)); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.about-tile span{ font-size:12.5px; color:var(--text-dim); font-weight:500; }
+.about-tile:nth-child(2){ margin-top:26px; }
+.about-tile:nth-child(3){ margin-top:-26px; }
+
+/* ============================================================
+   CTA BAND
+   ============================================================ */
+.cta-band{
+  border-radius:32px; padding:64px 40px; text-align:center; position:relative; overflow:hidden;
+  background:linear-gradient(135deg,var(--primary),var(--pink));
+}
+.cta-band::before{
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(circle at 30% 20%, rgba(255,255,255,.25), transparent 60%);
+}
+.cta-band h2{ font-size:clamp(28px,4.5vw,42px); font-weight:800; color:#fff; margin-bottom:14px; position:relative; letter-spacing:-.02em;}
+.cta-band p{ color:rgba(255,255,255,.85); margin-bottom:30px; position:relative; font-size:15.5px; }
+.cta-band .btn-ghost{ background:#fff; color:#171A33; border:none; position:relative; }
+.cta-band .btn-ghost:hover{ transform:translateY(-3px); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer{ padding:70px 0 34px; border-top:1px solid var(--surface-border); margin-top:60px; }
+.footer-grid{ display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr; gap:40px; margin-bottom:50px; }
+.footer-brand p{ color:var(--text-dim); font-size:14px; margin-top:14px; line-height:1.7; max-width:280px; }
+.footer-col h4{ font-size:13.5px; margin-bottom:16px; letter-spacing:.03em; text-transform:uppercase; color:var(--text-dim); }
+.footer-col ul{ list-style:none; display:flex; flex-direction:column; gap:11px; }
+.footer-col a{ font-size:14px; color:var(--text-dim); transition:color .25s; }
+.footer-col a:hover{ color:var(--text); }
+.footer-social{ display:flex; gap:10px; margin-top:18px; }
+.footer-social a{
+  width:38px; height:38px; border-radius:11px; background:var(--surface); border:1px solid var(--surface-border);
+  display:flex; align-items:center; justify-content:center; transition:all .3s var(--ease);
+}
+.footer-social a:hover{ background:var(--primary); color:#fff; transform:translateY(-3px); }
+.footer-bottom{
+  display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;
+  padding-top:26px; border-top:1px solid var(--surface-border);
+  font-size:13px; color:var(--text-dim);
+}
+.footer-bottom span i{ color:var(--pink); }
+
+/* ============================================================
+   SCROLL TO TOP
+   ============================================================ */
+.scroll-top{
+  position:fixed; bottom:28px; right:28px; z-index:900;
+  width:50px; height:50px; border-radius:50%;
+  background:linear-gradient(135deg,var(--primary),var(--mint));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:17px; box-shadow:0 12px 30px rgba(108,92,231,.5);
+  opacity:0; visibility:hidden; transform:translateY(14px);
+  transition:all .35s var(--ease);
+}
+.scroll-top.show{ opacity:1; visibility:visible; transform:translateY(0); }
+.scroll-top:hover{ transform:translateY(-4px) scale(1.06); }
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast{
+  position:fixed; bottom:30px; left:50%; transform:translate(-50%,20px);
+  background:var(--surface-solid); border:1px solid var(--surface-border);
+  padding:14px 24px; border-radius:100px; font-size:13.5px; font-weight:500;
+  display:flex; align-items:center; gap:10px; z-index:2000;
+  opacity:0; pointer-events:none; transition:all .4s var(--ease);
+  box-shadow:var(--shadow-soft);
+}
+.toast.show{ opacity:1; transform:translate(-50%,0); }
+.toast i{ color:var(--success); }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width:900px){
+  .nav-links{ display:none; }
+  .nav-burger{ display:flex; }
+  .about-grid{ grid-template-columns:1fr; }
+  .footer-grid{ grid-template-columns:1fr 1fr; }
+}
+@media (max-width:560px){
+  .hero{ padding-top:130px; }
+  .footer-grid{ grid-template-columns:1fr; }
+  .stats-row{ gap:34px; }
+  .stat .num{ font-size:30px; }
+  .cta-band{ padding:46px 24px; }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- ============================================================
+     LOADER
+     ============================================================ -->
+<div id="loader">
+  <div class="loader-box">
+    <div class="loader-ring"></div>
+    <span>Loading Toolkit</span>
+  </div>
+</div>
+
+<!-- Background -->
+<div class="mesh-bg">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+<div class="grain"></div>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="navbar" id="navbar">
+  <div class="container nav-inner">
+    <a href="#home" class="logo">
+      <span class="logo-mark"><i class="fa-solid fa-graduation-cap"></i></span>
+      Student<span style="font-weight:400">Toolkit</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#tools">Tools</a></li>
+      <li><a href="#about">About</a></li>
+    </ul>
+    <div class="nav-actions">
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme"><i class="fa-solid fa-moon"></i></button>
+      <a href="#tools" class="nav-cta">Get Started</a>
+      <button class="nav-burger" id="burger"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     HERO SECTION
+     ============================================================ -->
+<header class="hero" id="home">
+  <div class="container hero-inner">
+    <div class="eyebrow"><span class="dot"></span> Built for students, by students</div>
+    <h1>Student <span class="grad">Toolkit</span></h1>
+    <p class="sub">All essential tools for students in one place. Calculate grades, manage time, track tasks, and stay motivated — all in a single, beautiful workspace.</p>
+
+    <div class="hero-cta-row">
+      <a href="#tools" class="btn btn-primary rippleBtn"><i class="fa-solid fa-wand-magic-sparkles"></i> Explore Tools</a>
+      <a href="#about" class="btn btn-ghost rippleBtn"><i class="fa-regular fa-circle-play"></i> Learn More</a>
+    </div>
+
+    <div class="hero-widget">
+      <span id="greeting"><strong>Good Day</strong></span>
+      <div class="sep"></div>
+      <span id="liveDate">—</span>
+      <div class="sep"></div>
+      <span id="liveTime">—</span>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat"><div class="num" data-count="6">0</div><div class="label">Smart Tools</div></div>
+      <div class="stat"><div class="num" data-count="100">0</div><div class="label">% Free Forever</div></div>
+      <div class="stat"><div class="num" data-count="0">0</div><div class="label">Sign-ups Needed</div></div>
+      <div class="stat"><div class="num" data-count="24">0</div><div class="label">Hrs Available</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================================================
+     TOOLS SECTION
+     ============================================================ -->
+<section class="section" id="tools">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="eyebrow"><span class="dot"></span> Your Toolkit</div>
+      <h2>Six tools. Zero clutter.</h2>
+      <p>Everything a student needs to plan, calculate, and stay on track — thoughtfully designed and instantly usable, no installs required.</p>
+    </div>
+
+    <div class="tools-grid">
+
+      <!-- TOOL 1: CGPA CALCULATOR -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-1"><i class="fa-solid fa-calculator"></i></div>
+        <h3>CGPA Calculator</h3>
+        <p class="desc">Add each subject's grade and credit hours to calculate your CGPA instantly.</p>
+
+        <div class="grade-rows" id="gradeRows"></div>
+        <button class="add-row-btn" id="addGradeRow"><i class="fa-solid fa-plus"></i> Add Subject</button>
+        <button class="btn-block rippleBtn" id="calcCgpaBtn"><i class="fa-solid fa-bolt"></i> Calculate CGPA</button>
+
+        <div class="result-box" id="cgpaResult">
+          <div class="big" id="cgpaValue">0.00</div>
+          <div class="tag">Your CGPA</div>
+        </div>
+      </div>
+
+      <!-- TOOL 2: ATTENDANCE CALCULATOR -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-2"><i class="fa-solid fa-chart-simple"></i></div>
+        <h3>Attendance Calculator</h3>
+        <p class="desc">Track your attendance percentage and know exactly how many classes you need.</p>
+
+        <div class="row-flex">
+          <div class="field">
+            <label>Classes Attended</label>
+            <input type="number" id="attAttended" min="0" placeholder="e.g. 42">
+          </div>
+          <div class="field">
+            <label>Total Classes</label>
+            <input type="number" id="attTotal" min="0" placeholder="e.g. 50">
+          </div>
+        </div>
+        <button class="btn-block rippleBtn" id="calcAttBtn"><i class="fa-solid fa-bolt"></i> Calculate Attendance</button>
+
+        <div class="result-box" id="attResult">
+          <div class="big" id="attValue">0%</div>
+          <div class="tag">Current Attendance</div>
+          <div id="attBadge"></div>
+          <div class="meter"><div class="meter-fill" id="attMeter"></div></div>
+          <div class="hint" id="attHint"></div>
+        </div>
+      </div>
+
+      <!-- TOOL 3: POMODORO TIMER -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-3"><i class="fa-solid fa-mug-hot"></i></div>
+        <h3>Pomodoro Timer</h3>
+        <p class="desc">Stay focused with a 25-minute countdown timer and a clean progress ring.</p>
+
+        <div class="pomo-wrap">
+          <div class="pomo-ring-wrap">
+            <svg viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="pomoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#6C5CE7"/>
+                  <stop offset="100%" stop-color="#00D9C0"/>
+                </linearGradient>
+              </defs>
+              <circle class="pomo-ring-bg" cx="100" cy="100" r="88"></circle>
+              <circle class="pomo-ring-fg" id="pomoRing" cx="100" cy="100" r="88"></circle>
+            </svg>
+            <div class="pomo-time">
+              <div class="t" id="pomoTime">25:00</div>
+              <div class="mode" id="pomoMode">Focus</div>
+            </div>
+          </div>
+          <div class="pomo-controls">
+            <button class="start" id="pomoStart"><i class="fa-solid fa-play"></i> Start</button>
+            <button id="pomoPause"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button id="pomoReset"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TOOL 4: TO-DO LIST -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-4"><i class="fa-solid fa-list-check"></i></div>
+        <h3>To-Do List</h3>
+        <p class="desc">Capture tasks, check them off, and keep everything saved locally in your browser.</p>
+
+        <div class="todo-input-row">
+          <input type="text" id="todoInput" placeholder="Add a new task...">
+          <button class="todo-add-btn" id="todoAddBtn"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <div class="todo-list" id="todoList"></div>
+        <div class="todo-stats">
+          <span id="todoTotal">0 tasks</span>
+          <span id="todoDone">0 completed</span>
+        </div>
+      </div>
+
+      <!-- TOOL 5: RANDOM MOTIVATION -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-5"><i class="fa-solid fa-fire"></i></div>
+        <h3>Random Motivation</h3>
+        <p class="desc">Feeling stuck? Get an instant boost of motivation whenever you need it.</p>
+
+        <div class="quote-box">
+          <p id="quoteText">"Push yourself, because no one else is going to do it for you."</p>
+        </div>
+        <button class="btn-block rippleBtn" id="motivateBtn"><i class="fa-solid fa-bolt"></i> Motivate Me</button>
+      </div>
+
+      <!-- TOOL 6: QUICK NOTES -->
+      <div class="tool-card reveal">
+        <div class="tool-icon icon-6"><i class="fa-solid fa-note-sticky"></i></div>
+        <h3>Quick Notes</h3>
+        <p class="desc">Jot down quick thoughts or reminders — automatically saved as you type.</p>
+
+        <textarea class="notes-area" id="notesArea" placeholder="Start typing your notes here..."></textarea>
+        <div class="notes-status"><i class="fa-solid fa-circle-check"></i> <span id="notesStatus">All notes saved</span></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     ABOUT SECTION
+     ============================================================ -->
+<section class="section" id="about">
+  <div class="container">
+    <div class="about-grid">
+      <div class="about-card reveal">
+        <div class="eyebrow"><span class="dot"></span> About the project</div>
+        <h2>One workspace for your entire student life.</h2>
+        <p>Student Toolkit brings together the small utilities every student ends up needing — a grade calculator, an attendance tracker, a focus timer, a task list, a motivation button, and a notepad — into one fast, distraction-free page.</p>
+        <p>No sign-ups, no ads, no backend. Everything runs directly in your browser, and your data — tasks and notes — stays saved on your own device.</p>
+        <ul class="about-list">
+          <li><i class="fa-solid fa-check"></i> Works fully offline after first load</li>
+          <li><i class="fa-solid fa-check"></i> Your data never leaves your device</li>
+          <li><i class="fa-solid fa-check"></i> Fast, responsive, and distraction-free</li>
+          <li><i class="fa-solid fa-check"></i> Designed for late-night study sessions</li>
+        </ul>
+      </div>
+      <div class="about-visual reveal">
+        <div class="about-tile"><i class="fa-solid fa-bolt"></i><span>Instant Results</span></div>
+        <div class="about-tile"><i class="fa-solid fa-lock"></i><span>Local & Private</span></div>
+        <div class="about-tile"><i class="fa-solid fa-mobile-screen"></i><span>Mobile Ready</span></div>
+        <div class="about-tile"><i class="fa-solid fa-palette"></i><span>Light & Dark</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     CTA BAND
+     ============================================================ -->
+<section class="section" style="padding-top:0;">
+  <div class="container">
+    <div class="cta-band reveal">
+      <h2>Ready to simplify your student life?</h2>
+      <p>Jump back into your toolkit — everything is already set up and waiting.</p>
+      <a href="#tools" class="btn btn-ghost rippleBtn"><i class="fa-solid fa-arrow-up-right-from-square"></i> Start Using the Tools</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     FOOTER
+     ============================================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a href="#home" class="logo">
+          <span class="logo-mark"><i class="fa-solid fa-graduation-cap"></i></span>
+          Student<span style="font-weight:400">Toolkit</span>
+        </a>
+        <p>A clean, modern set of tools built to make everyday student life a little easier — right in your browser.</p>
+        <div class="footer-social">
+          <a href="#"><i class="fa-brands fa-github"></i></a>
+          <a href="#"><i class="fa-brands fa-twitter"></i></a>
+          <a href="#"><i class="fa-brands fa-instagram"></i></a>
+          <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#home">Home</a></li>
+          <li><a href="#tools">Tools</a></li>
+          <li><a href="#about">About</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Tools</h4>
+        <ul>
+          <li><a href="#tools">CGPA Calculator</a></li>
+          <li><a href="#tools">Attendance Tracker</a></li>
+          <li><a href="#tools">Pomodoro Timer</a></li>
+          <li><a href="#tools">To-Do List</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#tools">Quick Notes</a></li>
+          <li><a href="#tools">Motivation</a></li>
+          <li><a href="#about">FAQ</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© <span id="year"></span> Student Toolkit. All rights reserved.</span>
+      <span>Made with <i class="fa-solid fa-heart"></i> for students everywhere</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Scroll to top -->
+<button class="scroll-top" id="scrollTop"><i class="fa-solid fa-arrow-up"></i></button>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i> <span id="toastMsg">Saved</span></div>
+
+<script>
+/* ============================================================
+   LOADER
+   ============================================================ */
+window.addEventListener('load', () => {
+  setTimeout(() => document.getElementById('loader').classList.add('hide'), 500);
+});
+
+/* ============================================================
+   NAVBAR SCROLL + MOBILE BURGER
+   ============================================================ */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 40);
+  toggleScrollTop();
+});
+
+const burger = document.getElementById('burger');
+const navLinks = document.querySelector('.nav-links');
+burger.addEventListener('click', () => {
+  navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+  if(navLinks.style.display === 'flex'){
+    navLinks.style.cssText += 'position:fixed;top:76px;left:20px;right:20px;flex-direction:column;padding:16px;';
+  }
+});
+document.querySelectorAll('.nav-links a').forEach(a=>{
+  a.addEventListener('click', ()=>{ if(window.innerWidth<=900) navLinks.style.display='none'; });
+});
+
+/* ============================================================
+   THEME TOGGLE (Dark / Light)
+   ============================================================ */
+const themeToggle = document.getElementById('themeToggle');
+const body = document.body;
+function setTheme(theme){
+  body.setAttribute('data-theme', theme);
+  themeToggle.innerHTML = theme === 'dark' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+  localStorage.setItem('st-theme', theme);
+}
+themeToggle.addEventListener('click', () => {
+  const current = body.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+setTheme(localStorage.getItem('st-theme') || 'dark');
+
+/* ============================================================
+   RIPPLE EFFECT ON BUTTONS
+   ============================================================ */
+document.querySelectorAll('.rippleBtn, .btn-block, .todo-add-btn, .pomo-controls button, .theme-toggle').forEach(btn=>{
+  btn.style.position = btn.style.position || 'relative';
+  btn.style.overflow = 'hidden';
+  btn.addEventListener('click', function(e){
+    const rect = this.getBoundingClientRect();
+    const circle = document.createElement('span');
+    const size = Math.max(rect.width, rect.height);
+    circle.className = 'ripple';
+    circle.style.width = circle.style.height = size + 'px';
+    circle.style.left = (e.clientX - rect.left - size/2) + 'px';
+    circle.style.top = (e.clientY - rect.top - size/2) + 'px';
+    this.appendChild(circle);
+    setTimeout(()=>circle.remove(), 650);
+  });
+});
+
+/* ============================================================
+   SCROLL REVEAL ANIMATIONS
+   ============================================================ */
+const revealEls = document.querySelectorAll('.reveal');
+const revealObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    if(entry.isIntersecting){ entry.target.classList.add('in'); revealObserver.unobserve(entry.target); }
+  });
+}, { threshold: 0.15 });
+revealEls.forEach(el=>revealObserver.observe(el));
+
+/* ============================================================
+   ANIMATED COUNTERS
+   ============================================================ */
+const counters = document.querySelectorAll('.stat .num');
+let countersStarted = false;
+function animateCounters(){
+  if(countersStarted) return;
+  countersStarted = true;
+  counters.forEach(el=>{
+    const target = parseInt(el.getAttribute('data-count'));
+    let current = 0;
+    const duration = 1400;
+    const stepTime = 16;
+    const steps = duration / stepTime;
+    const increment = target / steps;
+    const suffixEl = el;
+    const timer = setInterval(()=>{
+      current += increment;
+      if(current >= target){ current = target; clearInterval(timer); }
+      suffixEl.textContent = Math.floor(current);
+    }, stepTime);
+  });
+}
+const statsObserver = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{ if(entry.isIntersecting) animateCounters(); });
+}, { threshold: 0.4 });
+const statsRow = document.querySelector('.stats-row');
+if(statsRow) statsObserver.observe(statsRow);
+
+/* ============================================================
+   SCROLL TO TOP BUTTON
+   ============================================================ */
+const scrollTopBtn = document.getElementById('scrollTop');
+function toggleScrollTop(){ scrollTopBtn.classList.toggle('show', window.scrollY > 500); }
+scrollTopBtn.addEventListener('click', ()=> window.scrollTo({ top:0, behavior:'smooth' }));
+
+/* ============================================================
+   TOAST HELPER
+   ============================================================ */
+const toast = document.getElementById('toast');
+const toastMsg = document.getElementById('toastMsg');
+let toastTimer;
+function showToast(msg){
+  toastMsg.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toast.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   LIVE DATE / TIME + GREETING
+   ============================================================ */
+function updateClock(){
+  const now = new Date();
+  const hours = now.getHours();
+  let greetText = 'Good Evening';
+  let icon = 'fa-moon';
+  if(hours < 12){ greetText = 'Good Morning'; icon = 'fa-sun'; }
+  else if(hours < 17){ greetText = 'Good Afternoon'; icon = 'fa-cloud-sun'; }
+  document.getElementById('greeting').innerHTML = `<i class="fa-solid ${icon}"></i> <strong>${greetText}</strong>`;
+
+  const dateOpts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('liveDate').textContent = now.toLocaleDateString(undefined, dateOpts);
+  document.getElementById('liveTime').textContent = now.toLocaleTimeString();
+}
+updateClock();
+setInterval(updateClock, 1000);
+document.getElementById('year').textContent = new Date().getFullYear();
+
+/* ============================================================
+   TOOL 1: CGPA CALCULATOR
+   ============================================================ */
+const gradePoints = { 'O':10, 'A+':9, 'A':8, 'B+':7, 'B':6, 'C':5, 'U':0 };
+const gradeRowsEl = document.getElementById('gradeRows');
+let gradeRowCount = 0;
+
+function createGradeRow(){
+  gradeRowCount++;
+  const row = document.createElement('div');
+  row.className = 'grade-row';
+  row.innerHTML = `
+    <select class="gr-grade">
+      <option value="O">O (10)</option>
+      <option value="A+">A+ (9)</option>
+      <option value="A">A (8)</option>
+      <option value="B+">B+ (7)</option>
+      <option value="B">B (6)</option>
+      <option value="C">C (5)</option>
+      <option value="U">U (0)</option>
+    </select>
+    <input type="number" class="gr-credit" placeholder="Credits" min="0" value="3">
+    <button class="rm" title="Remove"><i class="fa-solid fa-xmark"></i></button>
+  `;
+  row.querySelector('.rm').addEventListener('click', ()=>{
+    if(gradeRowsEl.children.length > 1){ row.remove(); }
+  });
+  gradeRowsEl.appendChild(row);
+}
+// seed with 3 rows
+createGradeRow(); createGradeRow(); createGradeRow();
+document.getElementById('addGradeRow').addEventListener('click', createGradeRow);
+
+document.getElementById('calcCgpaBtn').addEventListener('click', ()=>{
+  const rows = gradeRowsEl.querySelectorAll('.grade-row');
+  let totalPoints = 0, totalCredits = 0;
+  rows.forEach(row=>{
+    const grade = row.querySelector('.gr-grade').value;
+    const credit = parseFloat(row.querySelector('.gr-credit').value) || 0;
+    totalPoints += (gradePoints[grade] * credit);
+    totalCredits += credit;
+  });
+  const cgpa = totalCredits > 0 ? (totalPoints / totalCredits) : 0;
+  const resultBox = document.getElementById('cgpaResult');
+  document.getElementById('cgpaValue').textContent = cgpa.toFixed(2);
+  resultBox.classList.remove('show');
+  void resultBox.offsetWidth; // restart animation
+  resultBox.classList.add('show');
+});
+
+/* ============================================================
+   TOOL 2: ATTENDANCE CALCULATOR
+   ============================================================ */
+document.getElementById('calcAttBtn').addEventListener('click', ()=>{
+  const attended = parseFloat(document.getElementById('attAttended').value) || 0;
+  const total = parseFloat(document.getElementById('attTotal').value) || 0;
+  const resultBox = document.getElementById('attResult');
+
+  if(total <= 0 || attended > total){
+    showToast('Please enter valid attendance numbers');
+    return;
+  }
+
+  const pct = (attended / total) * 100;
+  document.getElementById('attValue').textContent = pct.toFixed(1) + '%';
+
+  const badgeEl = document.getElementById('attBadge');
+  const meterEl = document.getElementById('attMeter');
+  const hintEl = document.getElementById('attHint');
+  let color;
+
+  if(pct >= 75){
+    badgeEl.innerHTML = '<span class="grade-badge badge-green">Safe Zone</span>';
+    color = 'var(--success)';
+    const canSkip = Math.floor((attended - 0.75 * total) / 0.75);
+    hintEl.textContent = canSkip > 0 ? `You can skip up to ${canSkip} more class${canSkip>1?'es':''} and stay above 75%.` : `You're right at the edge of 75% — attend consistently.`;
+  } else if(pct >= 60){
+    badgeEl.innerHTML = '<span class="grade-badge badge-orange">Warning Zone</span>';
+    color = 'var(--amber)';
+    const needed = Math.ceil((0.75 * total - attended) / 0.25);
+    hintEl.textContent = `Attend ${needed} more class${needed>1?'es':''} in a row to reach 75%.`;
+  } else {
+    badgeEl.innerHTML = '<span class="grade-badge badge-red">Danger Zone</span>';
+    color = 'var(--danger)';
+    const needed = Math.ceil((0.75 * total - attended) / 0.25);
+    hintEl.textContent = `Attend ${needed} more class${needed>1?'es':''} in a row to reach 75%.`;
+  }
+
+  meterEl.style.width = Math.min(pct,100) + '%';
+  meterEl.style.background = color;
+
+  resultBox.classList.remove('show');
+  void resultBox.offsetWidth;
+  resultBox.classList.add('show');
+});
+
+/* ============================================================
+   TOOL 3: POMODORO TIMER
+   ============================================================ */
+const FOCUS_TIME = 25 * 60;
+let pomoRemaining = FOCUS_TIME;
+let pomoTotal = FOCUS_TIME;
+let pomoInterval = null;
+let pomoRunning = false;
+
+const pomoRing = document.getElementById('pomoRing');
+const RADIUS = 88;
+const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+pomoRing.style.strokeDasharray = CIRCUMFERENCE;
+pomoRing.style.strokeDashoffset = 0;
+
+function updatePomoDisplay(){
+  const mins = Math.floor(pomoRemaining / 60).toString().padStart(2,'0');
+  const secs = (pomoRemaining % 60).toString().padStart(2,'0');
+  document.getElementById('pomoTime').textContent = `${mins}:${secs}`;
+  const progress = 1 - (pomoRemaining / pomoTotal);
+  pomoRing.style.strokeDashoffset = CIRCUMFERENCE * progress;
+}
+
+document.getElementById('pomoStart').addEventListener('click', ()=>{
+  if(pomoRunning) return;
+  pomoRunning = true;
+  document.getElementById('pomoMode').textContent = 'Focusing…';
+  pomoInterval = setInterval(()=>{
+    if(pomoRemaining > 0){
+      pomoRemaining--;
+      updatePomoDisplay();
+    } else {
+      clearInterval(pomoInterval);
+      pomoRunning = false;
+      document.getElementById('pomoMode').textContent = 'Session Complete';
+      showToast('Pomodoro session complete! Take a break 🎉');
+    }
+  }, 1000);
+});
+
+document.getElementById('pomoPause').addEventListener('click', ()=>{
+  pomoRunning = false;
+  clearInterval(pomoInterval);
+  document.getElementById('pomoMode').textContent = 'Paused';
+});
+
+document.getElementById('pomoReset').addEventListener('click', ()=>{
+  pomoRunning = false;
+  clearInterval(pomoInterval);
+  pomoRemaining = FOCUS_TIME;
+  pomoTotal = FOCUS_TIME;
+  document.getElementById('pomoMode').textContent = 'Focus';
+  updatePomoDisplay();
+});
+
+updatePomoDisplay();
+
+/* ============================================================
+   TOOL 4: TO-DO LIST (LocalStorage)
+   ============================================================ */
+const todoInput = document.getElementById('todoInput');
+const todoListEl = document.getElementById('todoList');
+let todos = JSON.parse(localStorage.getItem('st-todos') || '[]');
+
+function saveTodos(){
+  localStorage.setItem('st-todos', JSON.stringify(todos));
+}
+
+function renderTodos(){
+  todoListEl.innerHTML = '';
+  if(todos.length === 0){
+    todoListEl.innerHTML = '<div class="todo-empty">No tasks yet — add one above ✨</div>';
+  } else {
+    todos.forEach((todo, idx)=>{
+      const item = document.createElement('div');
+      item.className = 'todo-item' + (todo.done ? ' done' : '');
+      item.innerHTML = `
+        <div class="todo-check ${todo.done ? 'done' : ''}"><i class="fa-solid fa-check" style="${todo.done?'':'display:none'}"></i></div>
+        <span>${escapeHtml(todo.text)}</span>
+        <button class="todo-del"><i class="fa-solid fa-trash"></i></button>
+      `;
+      item.querySelector('.todo-check').addEventListener('click', ()=>{
+        todos[idx].done = !todos[idx].done;
+        saveTodos(); renderTodos();
+      });
+      item.querySelector('.todo-del').addEventListener('click', ()=>{
+        todos.splice(idx,1);
+        saveTodos(); renderTodos();
+      });
+      todoListEl.appendChild(item);
+    });
+  }
+  document.getElementById('todoTotal').textContent = `${todos.length} task${todos.length!==1?'s':''}`;
+  document.getElementById('todoDone').textContent = `${todos.filter(t=>t.done).length} completed`;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function addTodo(){
+  const val = todoInput.value.trim();
+  if(!val) return;
+  todos.push({ text: val, done: false });
+  todoInput.value = '';
+  saveTodos(); renderTodos();
+}
+
+document.getElementById('todoAddBtn').addEventListener('click', addTodo);
+todoInput.addEventListener('keypress', (e)=>{ if(e.key === 'Enter') addTodo(); });
+
+renderTodos();
+
+/* ============================================================
+   TOOL 5: RANDOM MOTIVATION
+   ============================================================ */
+const quotes = [
+  { text:"Push yourself, because no one else is going to do it for you.", author:"Unknown" },
+  { text:"Success is the sum of small efforts repeated day in and day out.", author:"Robert Collier" },
+  { text:"The expert in anything was once a beginner.", author:"Helen Hayes" },
+  { text:"Don't watch the clock; do what it does — keep going.", author:"Sam Levenson" },
+  { text:"Dream big. Start small. Act now.", author:"Robin Sharma" },
+  { text:"Discipline is choosing between what you want now and what you want most.", author:"Abraham Lincoln" },
+  { text:"You don't have to be great to start, but you have to start to be great.", author:"Zig Ziglar" },
+  { text:"Small steps every day lead to big results.", author:"Unknown" },
+  { text:"Focus on progress, not perfection.", author:"Unknown" },
+  { text:"The future depends on what you do today.", author:"Mahatma Gandhi" },
+  { text:"Hard days are the best because that's when champions are made.", author:"Unknown" },
+  { text:"Study while others are sleeping; work while others are loafing.", author:"William A. Ward" }
+];
+
+const quoteText = document.getElementById('quoteText');
+document.getElementById('motivateBtn').addEventListener('click', ()=>{
+  quoteText.classList.add('fade');
+  setTimeout(()=>{
+    const random = quotes[Math.floor(Math.random() * quotes.length)];
+    quoteText.innerHTML = `"${random.text}" <span class="quote-author">— ${random.author}</span>`;
+    quoteText.classList.remove('fade');
+  }, 350);
+});
+
+/* ============================================================
+   TOOL 6: QUICK NOTES (LocalStorage, auto-save)
+   ============================================================ */
+const notesArea = document.getElementById('notesArea');
+const notesStatus = document.getElementById('notesStatus');
+notesArea.value = localStorage.getItem('st-notes') || '';
+
+let notesTimer;
+notesArea.addEventListener('input', ()=>{
+  notesStatus.textContent = 'Saving...';
+  clearTimeout(notesTimer);
+  notesTimer = setTimeout(()=>{
+    localStorage.setItem('st-notes', notesArea.value);
+    notesStatus.textContent = 'All notes saved';
+  }, 500);
+});
+
+/* ============================================================
+   SMOOTH SCROLL FOR ANCHOR LINKS
+   ============================================================ */
+document.querySelectorAll('a[href^="#"]').forEach(anchor=>{
+  anchor.addEventListener('click', function(e){
+    const targetId = this.getAttribute('href');
+    if(targetId.length > 1){
+      const target = document.querySelector(targetId);
+      if(target){
+        e.preventDefault();
+        window.scrollTo({ top: target.offsetTop - 80, behavior: 'smooth' });
+      }
+    }
+  });
+});
+</script>
+</body>
+</html>
