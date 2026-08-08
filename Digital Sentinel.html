@@ -1628,8 +1628,12 @@
     }
 
     function triggerSOS() {
-        // SOS: open emergency modal AND attempt to call 112
-        openEmergency();
+        // SOS should show exactly ONE popup: the fast tap-to-call overlay below.
+        // (It used to also open the full Emergency modal at the same time, which
+        // stacked two popups on top of each other.) We still fetch the location
+        // quietly in the background so the full Emergency panel — reachable from
+        // the "🚨 Emergency" nav link — is ready with it if the user opens it next.
+        fetchUserLocationForEmergency();
         // Show SOS overlay alert
         const overlay = document.createElement('div');
         overlay.id = 'sosOverlay';
@@ -1648,6 +1652,7 @@
                 <a href="tel:1078" style="background:#cc2200;color:#fff;padding:14px 22px;border-radius:12px;font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;text-decoration:none;border:2px solid #ff6644;min-width:130px;text-align:center;">🏥 1078<br><span style="font-size:10px;font-weight:400;">Disaster Mgmt</span></a>
             </div>
             <button onclick="document.getElementById('sosOverlay').remove()" style="background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.4);color:#fff;padding:10px 32px;border-radius:50px;font-family:'Orbitron',sans-serif;font-size:13px;cursor:pointer;margin-top:4px;letter-spacing:2px;">✕ DISMISS</button>
+            <button onclick="document.getElementById('sosOverlay').remove(); openEmergency();" style="background:transparent;border:none;color:#ffdddd;padding:10px 20px;font-family:'Orbitron',sans-serif;font-size:11px;cursor:pointer;margin-top:8px;letter-spacing:1px;text-decoration:underline;">More options — family contacts &amp; nearest police station</button>
         `;
         document.body.appendChild(overlay);
         // Auto dismiss overlay after 8 seconds
