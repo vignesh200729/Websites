@@ -9,6 +9,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <!-- Bootstrap JS bundle (Popper + Bootstrap) — required for the Emergency modal,
+         the mobile navbar hamburger collapse, and every data-bs-* control below.
+         This was missing, which silently broke all of those buttons. -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%9B%A1%EF%B8%8F%3C/text%3E%3C/svg%3E">
+    <meta name="description" content="Digital Sentinel — real-time safety mapping, buddy tracking, safe route planning, and one-tap emergency SOS for Tamil Nadu.">
 
     <style>
         :root {
@@ -293,6 +299,9 @@
         .tracking-description { font-size: 1rem; color: var(--text-muted); margin-bottom: 1.5rem; }
         .btn-start-tracking { background: var(--accent-magenta); color: white; border: none; padding: 0.9rem 2rem; border-radius: 8px; font-weight: 700; font-size: 1rem; transition: all 0.3s ease; cursor: pointer; }
         .btn-start-tracking:hover { background: #ff00ff; transform: translateY(-2px); box-shadow: 0 5px 20px rgba(255,0,255,0.3); color: white; }
+        .btn-start-tracking.tracking-live { background: #00cc66; animation: trackingPulse 1.6s ease-in-out infinite; }
+        .btn-start-tracking.tracking-live:hover { background: #00e673; }
+        @keyframes trackingPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(0,204,102,0.6); } 50% { box-shadow: 0 0 0 12px rgba(0,204,102,0); } }
         .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 2rem; max-width: 1200px; margin: 4rem auto; padding: 0 2rem; }
         .feature-card { background: linear-gradient(135deg, var(--secondary-dark) 0%, #3d2857 100%); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; transition: all 0.3s ease; text-align: center; }
         .feature-card:hover { border-color: var(--accent-magenta); box-shadow: 0 0 20px rgba(255,0,255,0.2); transform: translateY(-5px); }
@@ -1577,6 +1586,36 @@
     <script>
 
     // ════════════════════════════════════════════
+    //  LIGHTWEIGHT TOAST (replaces blocking alert() popups)
+    // ════════════════════════════════════════════
+    function showToast(message, type = 'info') {
+        const colors = {
+            info:    { border: '#ff00ff', icon: 'ℹ️' },
+            success: { border: '#00ff88', icon: '✅' },
+            warn:    { border: '#ffaa00', icon: '⚠️' },
+            error:   { border: '#ff5555', icon: '⛔' }
+        };
+        const c = colors[type] || colors.info;
+        let wrap = document.getElementById('appToastWrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.id = 'appToastWrap';
+            wrap.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:10px;align-items:center;pointer-events:none;';
+            document.body.appendChild(wrap);
+        }
+        const toast = document.createElement('div');
+        toast.style.cssText = `pointer-events:auto;background:linear-gradient(135deg,#241539,#2d1b47);border:1px solid ${c.border};box-shadow:0 0 20px ${c.border}55;color:#e0e0e0;padding:12px 20px;border-radius:8px;font-size:14px;max-width:90vw;text-align:center;opacity:0;transform:translateY(10px);transition:all .25s ease;`;
+        toast.innerHTML = `${c.icon} ${message}`;
+        wrap.appendChild(toast);
+        requestAnimationFrame(() => { toast.style.opacity = '1'; toast.style.transform = 'translateY(0)'; });
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateY(10px)';
+            setTimeout(() => toast.remove(), 250);
+        }, 3200);
+    }
+
+    // ════════════════════════════════════════════
     //  EMERGENCY
     // ════════════════════════════════════════════
     let userEmergencyCoords = null;
@@ -2048,26 +2087,76 @@
         });
     }
 
+    let buddyTrackingInterval = null;
+
     function startBuddyTracking() {
+        const btn = document.querySelector('.btn-start-tracking');
+        if (isTracking) {
+            // Toggle off
+            isTracking = false;
+            if (buddyTrackingInterval) { clearInterval(buddyTrackingInterval); buddyTrackingInterval = null; }
+            if (btn) { btn.innerHTML = '<i class="fas fa-play-circle"></i> Start Tracking'; btn.classList.remove('tracking-live'); }
+            showToast('Buddy Tracking stopped.', 'warn');
+            return;
+        }
         isTracking = true;
-        alert('Buddy Tracking Activated!');
-        setInterval(() => {
-            if (isTracking) {
-                buddiesData.forEach(buddy => {
-                    buddy.lat += (Math.random() - 0.5) * 0.001;
-                    buddy.lng += (Math.random() - 0.5) * 0.001;
-                    if (buddyMarkers[buddy.id]) buddyMarkers[buddy.id].setLatLng([buddy.lat, buddy.lng]);
-                });
-            }
+        if (btn) { btn.innerHTML = '<i class="fas fa-satellite-dish"></i> Tracking Live — Tap to Stop'; btn.classList.add('tracking-live'); }
+        showToast('Buddy Tracking activated — sharing your live location.', 'success');
+        buddyTrackingInterval = setInterval(() => {
+            if (!isTracking) return;
+            buddiesData.forEach(buddy => {
+                buddy.lat += (Math.random() - 0.5) * 0.001;
+                buddy.lng += (Math.random() - 0.5) * 0.001;
+                if (buddyMarkers[buddy.id]) buddyMarkers[buddy.id].setLatLng([buddy.lat, buddy.lng]);
+            });
         }, 5000);
     }
 
     function viewBuddyRoute(buddyId) {
         const buddy = buddiesData.find(b => b.id === buddyId);
-        if (buddy && buddyMap) { buddyMap.setView([buddy.lat, buddy.lng], 14); }
+        if (buddy && buddyMap) {
+            buddyMap.setView([buddy.lat, buddy.lng], 14);
+            if (buddyMarkers[buddyId]) buddyMarkers[buddyId].openPopup();
+            showToast(`Centered map on ${buddy.name}.`, 'info');
+        }
     }
 
-    function openAddBuddyModal() { alert('Add Buddy feature: User would see a modal to add a new buddy'); }
+    function openAddBuddyModal() {
+        const overlay = document.createElement('div');
+        overlay.id = 'addBuddyOverlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(10,5,20,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        overlay.innerHTML = `
+            <div style="background:linear-gradient(135deg,#241539,#2d1b47);border:2px solid #ff1493;border-radius:12px;padding:24px;max-width:380px;width:100%;box-shadow:0 0 40px rgba(255,20,147,0.4);">
+                <div style="font-family:'Orbitron',sans-serif;color:#ff1493;font-size:16px;letter-spacing:2px;margin-bottom:16px;text-align:center;">➕ ADD TRAVEL BUDDY</div>
+                <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:4px;">Name</label>
+                <input id="newBuddyName" type="text" placeholder="e.g. Sneha Rao" style="width:100%;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid #4a2f6f;border-radius:6px;color:#fff;margin-bottom:14px;">
+                <label style="display:block;font-size:12px;color:#9ca3af;margin-bottom:4px;">Current area (Chennai)</label>
+                <input id="newBuddyLocation" type="text" placeholder="e.g. Anna Nagar" style="width:100%;padding:10px 12px;background:rgba(0,0,0,0.3);border:1px solid #4a2f6f;border-radius:6px;color:#fff;margin-bottom:18px;">
+                <div style="display:flex;gap:10px;">
+                    <button id="cancelAddBuddy" style="flex:1;padding:10px;border-radius:6px;border:1px solid #4a2f6f;background:transparent;color:#9ca3af;font-weight:700;cursor:pointer;">Cancel</button>
+                    <button id="confirmAddBuddy" style="flex:1;padding:10px;border-radius:6px;border:none;background:#ff1493;color:#fff;font-weight:700;cursor:pointer;">Add Buddy</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        document.getElementById('newBuddyName').focus();
+        const close = () => overlay.remove();
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+        document.getElementById('cancelAddBuddy').addEventListener('click', close);
+        document.getElementById('confirmAddBuddy').addEventListener('click', () => {
+            const name = document.getElementById('newBuddyName').value.trim();
+            const location = document.getElementById('newBuddyLocation').value.trim() || 'Chennai';
+            if (!name) { showToast('Please enter a name first.', 'error'); return; }
+            const id = buddiesData.length ? Math.max(...buddiesData.map(b => b.id)) + 1 : 1;
+            const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+            const lat = userLocation.lat + (Math.random() - 0.5) * 0.06;
+            const lng = userLocation.lng + (Math.random() - 0.5) * 0.06;
+            buddiesData.push({ id, name, initials, location: `${location}, Chennai`, lat, lng, distance: calculateDistance(userLocation.lat, userLocation.lng, lat, lng), status: 'online' });
+            populateBuddies();
+            if (buddyMap) initializeBuddyMap();
+            showToast(`${name} added as a travel buddy!`, 'success');
+            close();
+        });
+    }
 
     // ════════════════════════════════════════════
     //  NOTIFICATIONS & CHAT
@@ -2094,7 +2183,13 @@
 
     function updateNotificationCount() { document.getElementById('notificationCount').textContent = notifications.length; }
 
-    function toggleNotifications() { if (notifications.length > 0) alert(`You have ${notifications.length} new notifications!`); }
+    function toggleNotifications() {
+        if (notifications.length > 0) {
+            showToast(`You have ${notifications.length} new notification${notifications.length > 1 ? 's' : ''} — check the alerts near the top.`, 'info');
+        } else {
+            showToast('No new notifications right now. You\'ll be alerted here if a buddy needs help.', 'info');
+        }
+    }
 
     function openChat(buddyId, buddyName) {
         currentChatBuddy = buddyId;
@@ -2214,17 +2309,19 @@
 
     function routeOpenGoogleMaps() {
         if (routeCurrentFrom && routeCurrentTo) window.open(`https://www.google.com/maps/dir/${encodeURIComponent(routeCurrentFrom)}+Tamil+Nadu/${encodeURIComponent(routeCurrentTo)}+Tamil+Nadu`, '_blank');
-        else alert('Please suggest a route first');
+        else showToast('Please suggest a route first.', 'warn');
     }
     function routeOpenAppleMaps() {
-        if (routeFromCoords && routeToCoords) window.open(`maps://maps.apple.com/?saddr=${routeFromCoords.lat},${routeFromCoords.lng}&daddr=${routeToCoords.lat},${routeToCoords.lng}`, '_blank');
-        else alert('Please suggest a route first');
+        // Use the universal web link (not the maps:// custom scheme) so this works
+        // in every browser and still redirects into the Apple Maps app on iOS/macOS.
+        if (routeFromCoords && routeToCoords) window.open(`https://maps.apple.com/?saddr=${routeFromCoords.lat},${routeFromCoords.lng}&daddr=${routeToCoords.lat},${routeToCoords.lng}`, '_blank');
+        else showToast('Please suggest a route first.', 'warn');
     }
     function routeCopyURL() {
         if (routeFromCoords && routeToCoords) {
             const url = `https://www.openstreetmap.org/directions?engine=osrm_car&route=${routeFromCoords.lat},${routeFromCoords.lng};${routeToCoords.lat},${routeToCoords.lng}`;
-            navigator.clipboard.writeText(url).then(() => alert('✓ OpenStreetMap URL copied!')).catch(() => alert('Failed to copy URL'));
-        } else alert('Please suggest a route first');
+            navigator.clipboard.writeText(url).then(() => showToast('OpenStreetMap URL copied!', 'success')).catch(() => showToast('Failed to copy URL.', 'error'));
+        } else showToast('Please suggest a route first.', 'warn');
     }
 
     // ════════════════════════════════════════════
@@ -2258,6 +2355,20 @@
         // Chat enter key
         const chatInput = document.getElementById('chatInput');
         if (chatInput) chatInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+        // Auto-collapse the mobile navbar after a nav link is tapped, so the menu
+        // doesn't stay open covering the page (only matters on narrow viewports).
+        const navCollapseEl = document.getElementById('navbarNav');
+        if (navCollapseEl) {
+            document.querySelectorAll('#navbarNav .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (navCollapseEl.classList.contains('show') && window.bootstrap) {
+                        const instance = bootstrap.Collapse.getOrCreateInstance(navCollapseEl);
+                        instance.hide();
+                    }
+                });
+            });
+        }
 
         // Buddy alerts simulation
         setInterval(() => {
